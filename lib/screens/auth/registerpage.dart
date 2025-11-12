@@ -1,0 +1,288 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nursecycle/core/colorconfig.dart';
+import 'package:nursecycle/features/auth/auth_cubit.dart';
+import 'package:nursecycle/features/auth/auth_state.dart';
+import 'package:nursecycle/screens/auth/loginpage.dart';
+import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
+
+class Registerpage extends StatefulWidget {
+  const Registerpage({super.key});
+
+  @override
+  _RegisterpageState createState() => _RegisterpageState();
+}
+
+class _RegisterpageState extends State<Registerpage> {
+  final screenCubit = AuthCubit();
+  late final TextEditingController emailcontroller;
+  late final TextEditingController usernamecontroller;
+  late final TextEditingController passwordcontroller;
+  bool obscurePassword = true;
+  String selectedRole = 'nurse';
+
+  @override
+  void initState() {
+    screenCubit.loadInitialData();
+    emailcontroller = TextEditingController();
+    usernamecontroller = TextEditingController();
+    passwordcontroller = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    emailcontroller.dispose();
+    usernamecontroller.dispose();
+    passwordcontroller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocConsumer<AuthCubit, AuthState>(
+        bloc: screenCubit,
+        listener: (BuildContext context, AuthState state) {
+          if (state.error != null) {}
+        },
+        builder: (BuildContext context, AuthState state) {
+          if (state.isLoading) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          return buildBody(state);
+        },
+      ),
+    );
+  }
+
+  Widget buildBody(AuthState state) {
+    // final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return SingleChildScrollView(
+      child: Stack(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: screenHeight * 0.42,
+            child: Image.asset("assets/images/bgsignup.png", fit: BoxFit.cover),
+          ),
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SizedBox(height: screenHeight * 0.22),
+                  Text(
+                    "Sign Up",
+                    style: TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Image.asset("assets/images/pinkline.png"),
+                  SizedBox(height: 36),
+                  username(usernamecontroller),
+                  SizedBox(height: 24),
+                  email(emailcontroller),
+                  SizedBox(height: 24),
+                  Text(
+                    "Password",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  SizedBox(
+                    height: 32,
+                    width: double.infinity,
+                    child: TextField(
+                      controller: passwordcontroller,
+                      style: TextStyle(fontSize: 14),
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        border: UnderlineInputBorder(
+                          borderSide: BorderSide(color: primaryColor),
+                        ),
+                        // enabledBorder: UnderlineInputBorder(
+                        //   borderSide: BorderSide(color: primaryColor),
+                        // ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: primaryColor, width: 2),
+                        ),
+                        focusColor: primaryColor,
+                        floatingLabelBehavior: FloatingLabelBehavior.never,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                        labelText: "Password",
+                        labelStyle: TextStyle(fontSize: 14),
+                        hintText: "Masukkan Password",
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            size: 16,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              obscurePassword = !obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    "Register as",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text(
+                            'Nurse',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          value: 'nurse',
+                          groupValue: selectedRole,
+                          activeColor: primaryColor,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRole = value!;
+                            });
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text(
+                            'Patient',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                          value: 'patient',
+                          groupValue: selectedRole,
+                          activeColor: primaryColor,
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRole = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.06),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(screenHeight, 48),
+                      elevation: 4,
+                      fixedSize: Size(274, 48),
+                    ),
+                    onPressed: () {},
+                    // child: isLoading
+                    //     ? SizedBox(
+                    //         width: 20,
+                    //         height: 20,
+                    //         child: CircularProgressIndicator(
+                    //           color: Colors.white,
+                    //           strokeWidth: 2,
+                    //         ),
+                    //       )
+                    child: Text(
+                      "Create Account",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Already have an account? "),
+                      SizedBox(width: 4),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => Loginpage()));
+                        },
+                        child: Text(
+                          "Login",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget username(TextEditingController controller) {
+  return Column(
+    // mainAxisAlignment: MainAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Username",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      SizedBox(height: 8),
+      ttextfield(
+        controller: controller,
+        label: "Username",
+        hintText: "Masukkan username",
+      ),
+    ],
+  );
+}
+
+Widget email(TextEditingController controller) {
+  return Column(
+    // mainAxisAlignment: MainAxisAlignment.start,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        "Email",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      SizedBox(height: 8),
+      ttextfield(
+        controller: controller,
+        label: "Email",
+        hintText: "Masukkan email",
+      )
+    ],
+  );
+}
