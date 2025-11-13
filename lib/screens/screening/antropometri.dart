@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/inputformat.dart';
-import 'package:nursecycle/screens/screening/pubertasperempuan.dart';
-import 'package:nursecycle/screens/screening/widgets/controller.dart';
+import 'package:nursecycle/screens/screening/pubertasperempuan/pubertasperempuan.dart';
+import 'package:nursecycle/screens/screening/pubertaslaki/pubertaslaki.dart';
 import 'package:nursecycle/screens/screening/widgets/formscreening.dart';
 
+final TextEditingController tinggicontroller = TextEditingController();
+final TextEditingController beratcontroller = TextEditingController();
+final TextEditingController imtcontroller = TextEditingController();
+final TextEditingController statusgizicontroller = TextEditingController();
+final TextEditingController pertumbuhancontroller = TextEditingController();
+final TextEditingController lingkarpinggangcontroller = TextEditingController();
+final TextEditingController darahcontroller = TextEditingController();
+final TextEditingController denyutcontroller = TextEditingController();
+final TextEditingController kroniscontroller = TextEditingController();
+
 class Antropometri extends StatefulWidget {
-  const Antropometri({super.key});
+  final String gender;
+
+  const Antropometri({super.key, required this.gender});
 
   @override
   State<Antropometri> createState() => _AntropometriState();
@@ -67,7 +79,6 @@ class _AntropometriState extends State<Antropometri> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //tinggibadan
               Text(
                 "Tinggi Badan",
                 style: TextStyle(
@@ -85,7 +96,6 @@ class _AntropometriState extends State<Antropometri> {
                 suffix: 'cm',
               ),
               SizedBox(height: 12),
-              //tinggibadan
               Text(
                 "Berat Badan",
                 style: TextStyle(
@@ -102,9 +112,7 @@ class _AntropometriState extends State<Antropometri> {
                 keyboardType: TextInputType.number,
                 inputFormatters: AppInputFormatters.digitsOnly,
               ),
-              //imt
               SizedBox(height: 12),
-              //imt
               Text(
                 "IMT",
                 style: TextStyle(
@@ -120,7 +128,6 @@ class _AntropometriState extends State<Antropometri> {
                 ),
               ),
               SizedBox(height: 12),
-              //status
               Text(
                 "Status Gizi",
                 style: TextStyle(
@@ -136,7 +143,6 @@ class _AntropometriState extends State<Antropometri> {
                 ),
               ),
               SizedBox(height: 12),
-              //kecepatan pertumbuhan
               Text(
                 "Kecepatan Pertumbuhan",
                 style: TextStyle(
@@ -150,7 +156,6 @@ class _AntropometriState extends State<Antropometri> {
                 label: 'Kecepatan Pertumbuhan',
               ),
               SizedBox(height: 12),
-              //lingkar pinggang
               Text(
                 "Lingkar Pinggang",
                 style: TextStyle(
@@ -166,7 +171,6 @@ class _AntropometriState extends State<Antropometri> {
                 suffix: 'cm',
               ),
               SizedBox(height: 12),
-              //tekanan darah
               Text(
                 "Tekanan Darah",
                 style: TextStyle(
@@ -184,7 +188,6 @@ class _AntropometriState extends State<Antropometri> {
                 suffix: 'mmHg',
               ),
               SizedBox(height: 12),
-              //denyut nadi
               Text(
                 "Denyut Nadi",
                 style: TextStyle(
@@ -202,7 +205,6 @@ class _AntropometriState extends State<Antropometri> {
                 suffix: 'bpm',
               ),
               SizedBox(height: 12),
-              //Riwayat Penyakit Kronis
               Text(
                 "Riwayat Penyakit Kronis",
                 style: TextStyle(
@@ -223,12 +225,21 @@ class _AntropometriState extends State<Antropometri> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(fixedSize: Size(400, 48)),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Pubertasperempuan(),
-                      ),
-                    );
+                    if ((context.widget as Antropometri).gender == 'laki') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Pubertaslaki(),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Pubertasperempuan(),
+                        ),
+                      );
+                    }
                   },
                   child: Text(
                     "Next",

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nursecycle/core/colorconfig.dart';
-import 'package:nursecycle/features/auth/auth_cubit.dart';
-import 'package:nursecycle/features/auth/auth_state.dart';
+
 import 'package:nursecycle/screens/auth/registerpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
+import 'package:nursecycle/screens/screening/identitasremaja.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -14,8 +13,6 @@ class Loginpage extends StatefulWidget {
 }
 
 class _LoginpageState extends State<Loginpage> {
-  final screenCubit = AuthCubit();
-  // late final TextEditingController controller;
   late final TextEditingController identifiercontroller;
   late final TextEditingController passwordcontroller;
   bool obscurePassword = true;
@@ -23,8 +20,6 @@ class _LoginpageState extends State<Loginpage> {
 
   @override
   void initState() {
-    screenCubit.loadInitialData();
-    // emailcontroller = TextEditingController();
     identifiercontroller = TextEditingController();
     passwordcontroller = TextEditingController();
     super.initState();
@@ -32,7 +27,6 @@ class _LoginpageState extends State<Loginpage> {
 
   @override
   void dispose() {
-    // emailcontroller.dispose();
     identifiercontroller.dispose();
     passwordcontroller.dispose();
     super.dispose();
@@ -41,26 +35,11 @@ class _LoginpageState extends State<Loginpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocConsumer<AuthCubit, AuthState>(
-        bloc: screenCubit,
-        listener: (BuildContext context, AuthState state) {
-          if (state.error != null) {
-            // TODO your code here
-          }
-        },
-        builder: (BuildContext context, AuthState state) {
-          if (state.isLoading) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          return buildBody(state);
-        },
-      ),
+      body: buildBody(),
     );
   }
 
-  Widget buildBody(AuthState state) {
-    // final screenWidth = MediaQuery.of(context).size.width;
+  Widget buildBody() {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SingleChildScrollView(
@@ -111,9 +90,6 @@ class _LoginpageState extends State<Loginpage> {
                         border: UnderlineInputBorder(
                           borderSide: BorderSide(color: primaryColor),
                         ),
-                        // enabledBorder: UnderlineInputBorder(
-                        //   borderSide: BorderSide(color: primaryColor),
-                        // ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: primaryColor, width: 2),
                         ),
@@ -151,23 +127,10 @@ class _LoginpageState extends State<Loginpage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => Scaffold(
-                            body: Center(
-                              child: Text("Homepage"),
-                            ),
-                          ),
+                          builder: (context) => Identitasremaja(),
                         ),
                       );
                     },
-                    // child: isLoading
-                    //     ? SizedBox(
-                    //         width: 20,
-                    //         height: 20,
-                    //         child: CircularProgressIndicator(
-                    //           color: Colors.white,
-                    //           strokeWidth: 2,
-                    //         ),
-                    //       )
                     child: Text(
                       "Login",
                       style: TextStyle(fontSize: 14),
@@ -208,7 +171,6 @@ class _LoginpageState extends State<Loginpage> {
 
 Widget identifier(TextEditingController controller) {
   return Column(
-    // mainAxisAlignment: MainAxisAlignment.start,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(

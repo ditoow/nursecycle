@@ -1,10 +1,5 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nursecycle/core/colorconfig.dart';
-import 'package:nursecycle/features/auth/auth_cubit.dart';
-import 'package:nursecycle/features/auth/auth_state.dart';
 import 'package:nursecycle/screens/auth/loginpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
 
@@ -16,7 +11,6 @@ class Registerpage extends StatefulWidget {
 }
 
 class _RegisterpageState extends State<Registerpage> {
-  final screenCubit = AuthCubit();
   late final TextEditingController emailcontroller;
   late final TextEditingController usernamecontroller;
   late final TextEditingController passwordcontroller;
@@ -25,7 +19,6 @@ class _RegisterpageState extends State<Registerpage> {
 
   @override
   void initState() {
-    screenCubit.loadInitialData();
     emailcontroller = TextEditingController();
     usernamecontroller = TextEditingController();
     passwordcontroller = TextEditingController();
@@ -43,24 +36,11 @@ class _RegisterpageState extends State<Registerpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocConsumer<AuthCubit, AuthState>(
-        bloc: screenCubit,
-        listener: (BuildContext context, AuthState state) {
-          if (state.error != null) {}
-        },
-        builder: (BuildContext context, AuthState state) {
-          if (state.isLoading) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          return buildBody(state);
-        },
-      ),
+      body: buildBody(),
     );
   }
 
-  Widget buildBody(AuthState state) {
-    // final screenWidth = MediaQuery.of(context).size.width;
+  Widget buildBody() {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SingleChildScrollView(
@@ -113,9 +93,6 @@ class _RegisterpageState extends State<Registerpage> {
                         border: UnderlineInputBorder(
                           borderSide: BorderSide(color: primaryColor),
                         ),
-                        // enabledBorder: UnderlineInputBorder(
-                        //   borderSide: BorderSide(color: primaryColor),
-                        // ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: primaryColor, width: 2),
                         ),
@@ -196,15 +173,6 @@ class _RegisterpageState extends State<Registerpage> {
                       fixedSize: Size(274, 48),
                     ),
                     onPressed: () {},
-                    // child: isLoading
-                    //     ? SizedBox(
-                    //         width: 20,
-                    //         height: 20,
-                    //         child: CircularProgressIndicator(
-                    //           color: Colors.white,
-                    //           strokeWidth: 2,
-                    //         ),
-                    //       )
                     child: Text(
                       "Create Account",
                       style: TextStyle(fontSize: 14),
@@ -245,7 +213,6 @@ class _RegisterpageState extends State<Registerpage> {
 
 Widget username(TextEditingController controller) {
   return Column(
-    // mainAxisAlignment: MainAxisAlignment.start,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
@@ -267,7 +234,6 @@ Widget username(TextEditingController controller) {
 
 Widget email(TextEditingController controller) {
   return Column(
-    // mainAxisAlignment: MainAxisAlignment.start,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(

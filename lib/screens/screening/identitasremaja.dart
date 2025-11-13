@@ -1,11 +1,16 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 import 'package:nursecycle/core/inputformat.dart';
 import 'package:nursecycle/screens/screening/antropometri.dart';
-import 'package:nursecycle/screens/screening/widgets/controller.dart';
 import 'package:nursecycle/screens/screening/widgets/formscreening.dart';
+
+final TextEditingController namalengkapcontroller = TextEditingController();
+final TextEditingController tanggallahircontroller = TextEditingController();
+final TextEditingController usiacontroller = TextEditingController();
+final TextEditingController sekolahkelascontroller = TextEditingController();
+final TextEditingController alamatcontroller = TextEditingController();
+final TextEditingController ortuwalicontroller = TextEditingController();
+final TextEditingController kontakcontroller = TextEditingController();
 
 class Identitasremaja extends StatefulWidget {
   const Identitasremaja({super.key});
@@ -34,7 +39,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //nama lengkap
               Text(
                 "Nama Lengkap",
                 style: TextStyle(
@@ -49,7 +53,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 hintText: "Masukkan Nama Lengkap",
               ),
               SizedBox(height: 12),
-              //jenis kelamin
               Text(
                 "Jenis Kelamin",
                 style: TextStyle(
@@ -97,7 +100,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 ],
               ),
               SizedBox(height: 12),
-              //tanggal lahir
               Text(
                 "Tanggal Lahir",
                 style: TextStyle(
@@ -121,7 +123,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                   );
 
                   if (picked != null) {
-                    // Format tanggal
                     final months = [
                       '',
                       'Januari',
@@ -141,26 +142,18 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                         '${picked.day} ${months[picked.month]} ${picked.year}';
                     tanggallahircontroller.text = formattedDate;
 
-                    // Hitung usia
                     final now = DateTime.now();
                     int age = now.year - picked.year;
 
-                    // Cek apakah sudah ulang tahun tahun ini
                     if (now.month < picked.month ||
                         (now.month == picked.month && now.day < picked.day)) {
                       age--;
                     }
 
-                    // Set usia ke controller
-                    // usiacontroller.text = age.toString();
                     usiacontroller.text = '$age Tahun';
-
-                    // Atau kalau mau angka aja:
-                    // usiaController.text = age.toString();
                   }
                 },
               ),
-              //usia
               SizedBox(height: 12),
               Text(
                 "Usia",
@@ -177,7 +170,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                   readOnly: true,
                 ),
               ),
-              //sekolah/kelas
               SizedBox(height: 12),
               Text(
                 "Sekolah / Kelas",
@@ -192,7 +184,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 label: 'Sekolah / Kelas',
                 hintText: "Masukkan Sekolah / Kelas",
               ),
-              //alamat
               SizedBox(height: 12),
               Text(
                 "Alamat",
@@ -207,7 +198,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 label: 'Alamat',
                 hintText: "Masukkan Alamat",
               ),
-              //otuwali
               SizedBox(height: 12),
               Text(
                 "Nama Orangtua / Wali",
@@ -222,7 +212,6 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 label: 'Nama Orangtua / Wali',
                 hintText: "Masukkan Nama Orangtua / Wali",
               ),
-              //otuwali
               SizedBox(height: 12),
               Text(
                 "Nomor Kontak",
@@ -248,7 +237,8 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Antropometri(),
+                        builder: (context) =>
+                            Antropometri(gender: selectedRole),
                       ),
                     );
                   },

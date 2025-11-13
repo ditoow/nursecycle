@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/theme.dart';
-import 'package:nursecycle/screens/screening/identitasremaja.dart';
+import 'package:nursecycle/screens/auth/registerpage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nursecycle',
       theme: AppTheme.lightTheme,
-      home: Identitasremaja(),
+      home: Registerpage(),
     );
   }
 }

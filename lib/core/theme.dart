@@ -16,15 +16,15 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       ),
     ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      // fillColor: const Color.fromARGB(255, 255, 255, 255),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      hintStyle: TextStyle(color: Colors.grey),
-      labelStyle: const TextStyle(color: Colors.grey),
-    ),
+    // inputDecorationTheme: InputDecorationTheme(
+    //   filled: true,
+    //   // fillColor: const Color.fromARGB(255, 255, 255, 255),
+    //   border: OutlineInputBorder(
+    //     borderRadius: BorderRadius.circular(12),
+    //     borderSide: BorderSide.none,
+    //   ),
+    //   hintStyle: TextStyle(color: Colors.grey),
+    //   labelStyle: const TextStyle(color: Colors.grey),
+    // ),
   );
 }
