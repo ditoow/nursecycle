@@ -3,7 +3,7 @@ import 'package:nursecycle/core/colorconfig.dart';
 
 import 'package:nursecycle/screens/auth/registerpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
-import 'package:nursecycle/screens/screening/identitasremaja.dart';
+import 'package:nursecycle/screens/mainpage.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -127,7 +127,7 @@ class _LoginpageState extends State<Loginpage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => Identitasremaja(),
+                          builder: (context) => Mainpage(),
                         ),
                       );
                     },
