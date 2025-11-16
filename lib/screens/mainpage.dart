@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/screens/article/articlepage.dart';
+import 'package:nursecycle/screens/chat/chatpage.dart';
 import 'package:nursecycle/screens/home/homepage.dart';
 import 'package:nursecycle/screens/kalender/kalenderpage.dart';
 
@@ -16,8 +18,9 @@ class _MainpageState extends State<Mainpage> {
   static const List<Widget> _pages = <Widget>[
     Homepage(),
     Kalenderpage(),
+    Chatpage(),
     // MonitorPage(),
-    // EdukasiPage(),
+    ArticlePage(),
     // ProfilPage(),
   ];
 
@@ -63,20 +66,20 @@ class _MainpageState extends State<Mainpage> {
               label: 'Kalender',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.show_chart_outlined),
-              activeIcon: Icon(Icons.show_chart),
-              label: 'Monitor',
+              icon: Icon(Icons.chat_bubble_outline),
+              activeIcon: Icon(Icons.chat_bubble),
+              label: 'Chat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.menu_book_outlined),
               activeIcon: Icon(Icons.menu_book),
-              label: 'Edukasi',
+              label: 'Article',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profil',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.person_outline),
+            //   activeIcon: Icon(Icons.person),
+            //   label: 'Profil',
+            // ),
           ],
         ),
       ),

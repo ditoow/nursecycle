@@ -59,7 +59,6 @@ class _AntropometriState extends State<Antropometri> {
   @override
   void initState() {
     super.initState();
-
     tinggicontroller.addListener(_hitungIMT);
     beratcontroller.addListener(_hitungIMT);
   }

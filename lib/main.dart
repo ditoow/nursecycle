@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/theme.dart';
 import 'package:nursecycle/screens/auth/registerpage.dart';
+import 'package:nursecycle/screens/screening/identitasremaja.dart';
 
 void main() {
   runApp(const MyApp());
