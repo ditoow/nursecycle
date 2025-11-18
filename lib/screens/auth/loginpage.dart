@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:nursecycle/screens/mainpage.dart';
 import 'package:nursecycle/screens/auth/registerpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
-import 'package:nursecycle/screens/mainpage.dart';
 
 class Loginpage extends StatefulWidget {
   const Loginpage({super.key});
@@ -16,7 +16,9 @@ class _LoginpageState extends State<Loginpage> {
   late final TextEditingController identifiercontroller;
   late final TextEditingController passwordcontroller;
   bool obscurePassword = true;
-  String selectedRole = 'nurse';
+  // String selectedRole = 'nurse';
+
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -30,6 +32,57 @@ class _LoginpageState extends State<Loginpage> {
     identifiercontroller.dispose();
     passwordcontroller.dispose();
     super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Melakukan login dengan Email dan Password
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: identifiercontroller.text.trim(),
+        password: passwordcontroller.text.trim(),
+      );
+
+      if (mounted) {
+        // Jika sukses, pindah ke MainPage
+        // Menggunakan pushReplacement agar user tidak bisa back ke halaman login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Mainpage(),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      // Error spesifik dari Supabase (misal: password salah)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Error umum lainnya
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Terjadi kesalahan tidak terduga."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -119,22 +172,28 @@ class _LoginpageState extends State<Loginpage> {
                   SizedBox(height: screenHeight * 0.276),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          primaryColor, // Pastikan primaryColor terdefinisi
+                      foregroundColor: Colors.white,
                       minimumSize: Size(screenHeight, 48),
                       elevation: 4,
-                      fixedSize: Size(274, 48),
+                      fixedSize: const Size(274, 48),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Mainpage(),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      "Login",
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    // Jika loading, disable tombol (null)
+                    onPressed: _isLoading ? null : _signIn,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Login",
+                            style: TextStyle(fontSize: 14),
+                          ),
                   ),
                   SizedBox(height: 16),
                   Row(
