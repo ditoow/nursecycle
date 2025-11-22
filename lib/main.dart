@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/screens/auth/registerpage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/theme.dart';
 import 'package:nursecycle/screens/auth/loginpage.dart';
@@ -31,7 +32,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'NurseCycle',
       theme: AppTheme.lightTheme, // Asumsi kamu punya theme di core/theme.dart
-      home: const AuthGate(),
+      home: const Registerpage(),
     );
   }
 }

@@ -22,4 +22,36 @@ class Article {
     required this.publishDate,
     this.isFeatured = false,
   });
+
+  // Factory constructor untuk parsing dari JSON
+  factory Article.fromJson(Map<String, dynamic> json) {
+    return Article(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      excerpt: json['excerpt'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      author: json['author'] as String? ?? '',
+      readTime: json['read_time'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? '',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      publishDate: json['publish_date'] as String? ?? '',
+      isFeatured: json['is_featured'] as bool? ?? false,
+    );
+  }
+
+  // Method untuk convert ke JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'excerpt': excerpt,
+      'category': category,
+      'author': author,
+      'read_time': readTime,
+      'image_url': imageUrl,
+      'rating': rating,
+      'publish_date': publishDate,
+      'is_featured': isFeatured,
+    };
+  }
 }

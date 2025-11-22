@@ -33,7 +33,8 @@ class ArticleDetailPage extends StatelessWidget {
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                color: primaryColor.withOpacity(0.3),
+                // opacity 0.3 -> alpha 77
+                color: primaryColor.withAlpha(77),
                 child: const Icon(
                   Icons.image,
                   size: 80,
@@ -54,7 +55,8 @@ class ArticleDetailPage extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
+                      // opacity 0.1 -> alpha 25
+                      color: primaryColor.withAlpha(25),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -80,7 +82,8 @@ class ArticleDetailPage extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: primaryColor.withOpacity(0.2),
+                        // opacity 0.2 -> alpha 51
+                        backgroundColor: primaryColor.withAlpha(51),
                         child:
                             Icon(Icons.person, color: primaryColor, size: 20),
                       ),

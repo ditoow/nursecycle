@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -240,7 +242,7 @@ Widget identifier(TextEditingController controller) {
         ),
       ),
       SizedBox(height: 8),
-      ttextfield(
+      TTextField(
         controller: controller,
         label: "Username / Email",
         hintText: "Masukkan username atau email",

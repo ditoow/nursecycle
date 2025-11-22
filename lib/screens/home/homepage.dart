@@ -21,8 +21,8 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    // final screenHeight = MediaQuery.of(context).size.height;
+    // final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -140,7 +140,8 @@ class _HomepageState extends State<Homepage> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        // Mengganti opacity 0.2 -> alpha 51
+                        color: Colors.white.withAlpha(51),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -216,7 +217,8 @@ class _HomepageState extends State<Homepage> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
+                                      // Mengganti opacity 0.1 -> alpha 25
+                                      color: Colors.blue.withAlpha(25),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -265,7 +267,8 @@ class _HomepageState extends State<Homepage> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.green.withOpacity(0.1),
+                                      // Mengganti opacity 0.1 -> alpha 25
+                                      color: Colors.green.withAlpha(25),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -307,7 +310,8 @@ class _HomepageState extends State<Homepage> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.purple.withOpacity(0.1),
+                                      // Mengganti opacity 0.1 -> alpha 25
+                                      color: Colors.purple.withAlpha(25),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -346,7 +350,8 @@ class _HomepageState extends State<Homepage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          // Mengganti opacity 0.05 -> alpha 13
+                          color: Colors.black.withAlpha(13),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -367,8 +372,9 @@ class _HomepageState extends State<Homepage> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF8B5CF6)
-                                          .withOpacity(0.1),
+                                      // Mengganti opacity 0.1 -> alpha 25
+                                      color:
+                                          const Color(0xFF8B5CF6).withAlpha(25),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(
@@ -401,10 +407,12 @@ class _HomepageState extends State<Homepage> {
                                     child: Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.withOpacity(0.1),
+                                        // opacity 0.1 -> alpha 25
+                                        color: Colors.blue.withAlpha(25),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.blue.withOpacity(0.3),
+                                          // opacity 0.3 -> alpha 77
+                                          color: Colors.blue.withAlpha(77),
                                           width: 1,
                                         ),
                                       ),
@@ -438,10 +446,12 @@ class _HomepageState extends State<Homepage> {
                                     child: Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.1),
+                                        // opacity 0.1 -> alpha 25
+                                        color: Colors.green.withAlpha(25),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.green.withOpacity(0.3),
+                                          // opacity 0.3 -> alpha 77
+                                          color: Colors.green.withAlpha(77),
                                           width: 1,
                                         ),
                                       ),
@@ -479,10 +489,12 @@ class _HomepageState extends State<Homepage> {
                                     child: Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.orange.withOpacity(0.1),
+                                        // opacity 0.1 -> alpha 25
+                                        color: Colors.orange.withAlpha(25),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.orange.withOpacity(0.3),
+                                          // opacity 0.3 -> alpha 77
+                                          color: Colors.orange.withAlpha(77),
                                           width: 1,
                                         ),
                                       ),
@@ -516,10 +528,12 @@ class _HomepageState extends State<Homepage> {
                                     child: Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.red.withOpacity(0.1),
+                                        // opacity 0.1 -> alpha 25
+                                        color: Colors.red.withAlpha(25),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: Colors.red.withOpacity(0.3),
+                                          // opacity 0.3 -> alpha 77
+                                          color: Colors.red.withAlpha(77),
                                           width: 1,
                                         ),
                                       ),
@@ -566,7 +580,8 @@ class _HomepageState extends State<Homepage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          // Mengganti opacity 0.05 -> alpha 13
+                          color: Colors.black.withAlpha(13),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
@@ -587,7 +602,8 @@ class _HomepageState extends State<Homepage> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: Colors.amber.withOpacity(0.1),
+                                      // Mengganti opacity 0.1 -> alpha 25
+                                      color: Colors.amber.withAlpha(25),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(
