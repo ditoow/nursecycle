@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 import 'package:nursecycle/core/inputformat.dart';
 import 'package:nursecycle/screens/screening/antropometri.dart';
 import 'package:nursecycle/screens/screening/widgets/formscreening.dart';
+import 'package:nursecycle/models/screening_data.dart';
 
 final TextEditingController namalengkapcontroller = TextEditingController();
 final TextEditingController tanggallahircontroller = TextEditingController();
@@ -20,7 +23,130 @@ class Identitasremaja extends StatefulWidget {
 }
 
 class _IdentitasremajaState extends State<Identitasremaja> {
-  String selectedRole = 'laki';
+  late final TextEditingController namalengkapcontroller;
+  late final TextEditingController tanggallahircontroller;
+  late final TextEditingController usiacontroller;
+  late final TextEditingController sekolahkelascontroller;
+  late final TextEditingController alamatcontroller;
+  late final TextEditingController ortuwalicontroller;
+  late final TextEditingController kontakcontroller;
+
+  String selectedGender = 'laki'; // Diubah dari selectedRole ke selectedGender
+  bool isLoading = false;
+
+  DateTime? selectedDate;
+
+  @override
+  void initState() {
+    // --- INIT CONTROLLER ---
+    namalengkapcontroller = TextEditingController();
+    tanggallahircontroller = TextEditingController();
+    usiacontroller = TextEditingController();
+    sekolahkelascontroller = TextEditingController();
+    alamatcontroller = TextEditingController();
+    ortuwalicontroller = TextEditingController();
+    kontakcontroller = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    namalengkapcontroller.dispose();
+    tanggallahircontroller.dispose();
+    usiacontroller.dispose();
+    sekolahkelascontroller.dispose();
+    alamatcontroller.dispose();
+    ortuwalicontroller.dispose();
+    kontakcontroller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _collectAndContinue() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Anda harus login untuk menyimpan data.')),
+        );
+      }
+      return;
+    }
+
+    if (namalengkapcontroller.text.isEmpty || selectedDate == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Nama Lengkap dan Tanggal Lahir wajib diisi.')),
+        );
+      }
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final dataModel = ScreeningData()
+        ..fullName = namalengkapcontroller.text.trim()
+        ..gender = selectedGender
+        ..birthDate = selectedDate // Simpan objek DateTime
+        ..schoolClass = sekolahkelascontroller.text.trim()
+        ..address = alamatcontroller.text.trim()
+        ..parentName = ortuwalicontroller.text.trim()
+        ..contactNumber = kontakcontroller.text.trim();
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                Antropometri(gender: dataModel.gender!, initialData: dataModel),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan identitas: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  // --- LOGIKA DATE PICKER DAN HITUNG USIA ---
+  Future<void> _selectDate(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now.subtract(const Duration(days: 365 * 17)),
+      firstDate: DateTime(1950),
+      lastDate: now,
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked; // Simpan objek DateTime
+
+        // Format tampilan di TextField
+        final formattedDisplayDate = DateFormat('d MMMM yyyy').format(picked);
+        tanggallahircontroller.text = formattedDisplayDate;
+
+        // Hitung Usia
+        int age = now.year - picked.year;
+        if (now.month < picked.month ||
+            (now.month == picked.month && now.day < picked.day)) {
+          age--;
+        }
+        usiacontroller.text = '$age Tahun';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,12 +196,12 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                         style: TextStyle(fontSize: 14),
                       ),
                       value: 'laki',
-                      groupValue: selectedRole,
+                      groupValue: selectedGender,
                       activeColor: primaryColor,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
                         setState(() {
-                          selectedRole = value!;
+                          selectedGender = value!;
                         });
                       },
                     ),
@@ -87,12 +213,12 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                         style: TextStyle(fontSize: 14),
                       ),
                       value: 'perempuan',
-                      groupValue: selectedRole,
+                      groupValue: selectedGender,
                       activeColor: primaryColor,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) {
                         setState(() {
-                          selectedRole = value!;
+                          selectedGender = value!;
                         });
                       },
                     ),
@@ -113,46 +239,7 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 label: 'Tanggal Lahir',
                 readOnly: true,
                 suffixIcon: Icons.calendar_today,
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate:
-                        DateTime.now().subtract(Duration(days: 365 * 17)),
-                    firstDate: DateTime(1950),
-                    lastDate: DateTime.now(),
-                  );
-
-                  if (picked != null) {
-                    final months = [
-                      '',
-                      'Januari',
-                      'Februari',
-                      'Maret',
-                      'April',
-                      'Mei',
-                      'Juni',
-                      'Juli',
-                      'Agustus',
-                      'September',
-                      'Oktober',
-                      'November',
-                      'Desember'
-                    ];
-                    final formattedDate =
-                        '${picked.day} ${months[picked.month]} ${picked.year}';
-                    tanggallahircontroller.text = formattedDate;
-
-                    final now = DateTime.now();
-                    int age = now.year - picked.year;
-
-                    if (now.month < picked.month ||
-                        (now.month == picked.month && now.day < picked.day)) {
-                      age--;
-                    }
-
-                    usiacontroller.text = '$age Tahun';
-                  }
-                },
+                onTap: () => _selectDate(context),
               ),
               SizedBox(height: 12),
               Text(
@@ -233,15 +320,7 @@ class _IdentitasremajaState extends State<Identitasremaja> {
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(fixedSize: Size(400, 48)),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            Antropometri(gender: selectedRole),
-                      ),
-                    );
-                  },
+                  onPressed: isLoading ? null : _collectAndContinue,
                   child: Text(
                     "Next",
                   ),
