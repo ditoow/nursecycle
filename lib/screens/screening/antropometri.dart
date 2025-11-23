@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/inputformat.dart';
+import 'package:nursecycle/models/screening_data.dart';
 import 'package:nursecycle/screens/screening/pubertasperempuan/pubertasperempuan.dart';
 import 'package:nursecycle/screens/screening/pubertaslaki/pubertaslaki.dart';
 import 'package:nursecycle/screens/screening/widgets/formscreening.dart';
@@ -16,14 +17,28 @@ final TextEditingController kroniscontroller = TextEditingController();
 
 class Antropometri extends StatefulWidget {
   final String gender;
+  final ScreeningData initialData;
 
-  const Antropometri({super.key, required this.gender});
+  const Antropometri(
+      {super.key, required this.gender, required this.initialData});
 
   @override
   State<Antropometri> createState() => _AntropometriState();
 }
 
 class _AntropometriState extends State<Antropometri> {
+  late final TextEditingController tinggicontroller;
+  late final TextEditingController beratcontroller;
+  late final TextEditingController imtcontroller;
+  late final TextEditingController statusgizicontroller;
+  late final TextEditingController pertumbuhancontroller;
+  late final TextEditingController lingkarpinggangcontroller;
+  late final TextEditingController darahcontroller;
+  late final TextEditingController denyutcontroller;
+  late final TextEditingController kroniscontroller;
+
+  bool isLoading = false;
+
   String kategoriimt = "";
 
   void _hitungIMT() {
@@ -58,9 +73,122 @@ class _AntropometriState extends State<Antropometri> {
 
   @override
   void initState() {
+    tinggicontroller = TextEditingController();
+    beratcontroller = TextEditingController();
+    imtcontroller = TextEditingController();
+    statusgizicontroller = TextEditingController();
+    pertumbuhancontroller = TextEditingController();
+    lingkarpinggangcontroller = TextEditingController();
+    darahcontroller = TextEditingController();
+    denyutcontroller = TextEditingController();
+    kroniscontroller = TextEditingController();
+
     super.initState();
     tinggicontroller.addListener(_hitungIMT);
     beratcontroller.addListener(_hitungIMT);
+  }
+
+  @override
+  void dispose() {
+    tinggicontroller.dispose();
+    beratcontroller.dispose();
+    imtcontroller.dispose();
+    statusgizicontroller.dispose();
+    pertumbuhancontroller.dispose();
+    lingkarpinggangcontroller.dispose();
+    darahcontroller.dispose();
+    denyutcontroller.dispose();
+    kroniscontroller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _collectAndContinue() async {
+    // 1. Validasi Input Wajib (Cek Tinggi dan Berat)
+    if (tinggicontroller.text.isEmpty || beratcontroller.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tinggi dan Berat Badan wajib diisi.')),
+        );
+      }
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      // --- PRE-PROCESSING DATA ---
+      _hitungIMT(); // Pastikan IMT & Status Gizi sudah dihitung
+
+      final String tekananDarah = darahcontroller.text.trim();
+
+      // Penanganan Tekanan Darah (Split untuk disimpan ke Model)
+      int systolic = int.tryParse(tekananDarah.split('/').first.trim()) ?? 0;
+      int diastolic = int.tryParse(tekananDarah.split('/').last.trim()) ?? 0;
+
+      // TIDAK ADA LAGI user.id atau tabelFisik di sini, karena belum disimpan.
+      // --------------------------
+
+      // ✅ PENGGANTI DUAL-INSERT: UPDATE MODEL SCREENINGDATA
+      widget.initialData
+        ..heightCm = double.tryParse(tinggicontroller.text.trim())
+        ..weightKg = double.tryParse(beratcontroller.text.trim())
+        ..imt = double.tryParse(imtcontroller.text.trim())
+        ..statusGizi = statusgizicontroller.text.trim()
+        ..growthSpeed = double.tryParse(pertumbuhancontroller.text.trim())
+        ..waistCircCm = double.tryParse(lingkarpinggangcontroller.text.trim())
+        ..pulseRate = int.tryParse(denyutcontroller.text.trim())
+
+        // Data Fisik Vital Sign
+        ..systolicBp = systolic
+        ..diastolicBp = diastolic
+        ..chronicDisease = kroniscontroller.text.trim();
+
+      // TIDAK ADA PANGGILAN SUPABASE INSERT DI SINI
+
+      // --- NAVIGASI DAN SUKSES ---
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Data Antropometri terkumpul di memori.'),
+              backgroundColor:
+                  Colors.blueGrey // Warna berbeda karena belum save ke DB
+              ),
+        );
+
+        // Lanjutkan ke halaman pubertas sambil membawa model yang SUDAH TERISI
+        if (widget.gender == 'laki') {
+          // Catatan: Pubertaslaki harus diupdate untuk menerima 'screeningData'
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  Pubertaslaki(screeningData: widget.initialData),
+            ),
+          );
+        } else {
+          // Catatan: Pubertasperempuan harus diupdate untuk menerima 'screeningData'
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  Pubertasperempuan(screeningData: widget.initialData),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memproses data. Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      // TIDAK PERLU CEK USER ID
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -181,9 +309,8 @@ class _AntropometriState extends State<Antropometri> {
               Formscreening(
                 controller: darahcontroller,
                 label: 'Tekanan Darah',
-                hintText: 'Masukkan Tekanan Darah',
-                keyboardType: TextInputType.number,
-                inputFormatters: AppInputFormatters.digitsOnly,
+                hintText: 'Masukkan Sistolik/Diastolik (e.g., 120/80)',
+                keyboardType: TextInputType.text,
                 suffix: 'mmHg',
               ),
               SizedBox(height: 12),
@@ -223,23 +350,7 @@ class _AntropometriState extends State<Antropometri> {
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(fixedSize: Size(400, 48)),
-                  onPressed: () {
-                    if ((context.widget as Antropometri).gender == 'laki') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Pubertaslaki(),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Pubertasperempuan(),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: isLoading ? null : _collectAndContinue,
                   child: Text(
                     "Next",
                   ),

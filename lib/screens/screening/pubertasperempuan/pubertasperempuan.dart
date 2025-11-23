@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/models/screening_data.dart';
 import 'seksualsekunder.dart';
 import 'menstruasi.dart';
 
@@ -48,7 +49,9 @@ class PubertasControllers {
 }
 
 class Pubertasperempuan extends StatefulWidget {
-  const Pubertasperempuan({super.key});
+  final ScreeningData screeningData;
+
+  const Pubertasperempuan({super.key, required this.screeningData});
 
   @override
   State<Pubertasperempuan> createState() => _PubertasperempuanState();

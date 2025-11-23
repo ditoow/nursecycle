@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 import 'package:nursecycle/screens/auth/loginpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
@@ -7,15 +8,16 @@ class Registerpage extends StatefulWidget {
   const Registerpage({super.key});
 
   @override
-  _RegisterpageState createState() => _RegisterpageState();
+  RegisterpageState createState() => RegisterpageState();
 }
 
-class _RegisterpageState extends State<Registerpage> {
+class RegisterpageState extends State<Registerpage> {
   late final TextEditingController emailcontroller;
   late final TextEditingController usernamecontroller;
   late final TextEditingController passwordcontroller;
   bool obscurePassword = true;
   String selectedRole = 'nurse';
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -31,6 +33,87 @@ class _RegisterpageState extends State<Registerpage> {
     usernamecontroller.dispose();
     passwordcontroller.dispose();
     super.dispose();
+  }
+
+  Future<void> _signUp() async {
+    // Validasi input kosong sederhana
+    if (emailcontroller.text.isEmpty ||
+        passwordcontroller.text.isEmpty ||
+        usernamecontroller.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Semua kolom wajib diisi!")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Mendaftar ke Supabase
+      final response = await Supabase.instance.client.auth.signUp(
+        email: emailcontroller.text.trim(),
+        password: passwordcontroller.text.trim(),
+        data: {
+          'username': usernamecontroller.text.trim(),
+          'role': selectedRole, // Menyimpan role (nurse/patient)
+        },
+      );
+
+      if (mounted) {
+        // Cek apakah butuh konfirmasi email atau tidak
+        if (response.session == null) {
+          // Jika Supabase setting "Enable Email Confirm" = ON
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Registrasi berhasil! Cek email untuk verifikasi."),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Lempar ke halaman login
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const Loginpage()),
+          );
+        } else {
+          // Jika Supabase setting "Enable Email Confirm" = OFF (Langsung login)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Akun berhasil dibuat!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Tidak perlu navigasi manual karena AuthGate di main.dart akan otomatis mendeteksi session baru
+          // Tapi kita bisa pop halaman register ini agar stack bersih
+          Navigator.of(context).pop();
+        }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Terjadi kesalahan tidak terduga"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -168,15 +251,27 @@ class _RegisterpageState extends State<Registerpage> {
                   SizedBox(height: screenHeight * 0.06),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          primaryColor, // Pastikan primaryColor ada
+                      foregroundColor: Colors.white, // Warna text putih
                       minimumSize: Size(screenHeight, 48),
                       elevation: 4,
-                      fixedSize: Size(274, 48),
+                      fixedSize: const Size(274, 48),
                     ),
-                    onPressed: () {},
-                    child: Text(
-                      "Create Account",
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    onPressed: _isLoading ? null : _signUp,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Create Account",
+                            style: TextStyle(fontSize: 14),
+                          ),
                   ),
                   SizedBox(height: 16),
                   Row(
