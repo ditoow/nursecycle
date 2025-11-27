@@ -31,10 +31,158 @@ class _IdentitasremajaState extends State<Identitasremaja> {
   late final TextEditingController ortuwalicontroller;
   late final TextEditingController kontakcontroller;
 
-  String selectedGender = 'laki'; // Diubah dari selectedRole ke selectedGender
-  bool isLoading = false;
-
+  // final bool _isDataLoading = true;
+  String selectedGender = 'laki';
+  bool isLoading = false; // ✅ State untuk loading data lama
   DateTime? selectedDate;
+
+  void _preFill(TextEditingController controller, dynamic value) {
+    if (value != null) {
+      controller.text = value.toString();
+    }
+  }
+
+  Future<void> _loadExistingData() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (mounted) setState(() => isLoading = true);
+
+    if (user == null) {
+      if (mounted)
+        setState(() => isLoading = false); // Set false jika tidak ada user
+      return;
+    }
+
+    try {
+      // 1. MULAI LOADING DATA LAMA DARI SEMUA TABEL SECARA BERSAMAAN
+      // Kita ambil record terbaru dari setiap tabel menggunakan Future.wait
+      final results = await Future.wait([
+        // 0: Identity
+        Supabase.instance.client
+            .from('screening_identity')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 1: Antropometri
+        Supabase.instance.client
+            .from('screening_antropometri')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 2: Pubertas Male - Tanner
+        Supabase.instance.client
+            .from('screening_puberty_male_tanner')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 3: Pubertas Male - Fisik
+        Supabase.instance.client
+            .from('screening_puberty_male_fisik')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 4: Pubertas Male - Psikososial
+        Supabase.instance.client
+            .from('screening_puberty_male_psikososial')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 5: Pubertas Female - Tanner
+        Supabase.instance.client
+            .from('screening_puberty_female_tanner')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 6: Pubertas Female - Fisik
+        Supabase.instance.client
+            .from('screening_puberty_female_fisik')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+        // 7: Pubertas Female - Psikososial
+        Supabase.instance.client
+            .from('screening_puberty_female_menstruasi')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle(),
+      ]);
+
+      // Kita asumsikan response[0] adalah data Identitas terbaru.
+      final identityData = results[0];
+      final antropometriData = results[1];
+
+      // 2. PRE-FILL CONTROLLERS (Data Identitas)
+      if (identityData != null) {
+        _preFill(namalengkapcontroller, identityData['full_name']);
+        // ... (lanjutkan pre-fill untuk semua controller Identitas)
+        // ...
+      }
+
+      // 3. UPDATE MODEL DENGAN SEMUA DATA DARI DB
+      _updateModelFromDb(identityData, antropometriData, results);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memuat data lama: ${e.toString()}')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Tambahkan method ini untuk menghindari error
+  void _updateModelFromDb(
+      dynamic identityData, dynamic antropometriData, List<dynamic> results) {
+    // Implementasi sederhana: pre-fill controller jika data ada
+    if (identityData != null) {
+      _preFill(namalengkapcontroller, identityData['full_name']);
+      _preFill(sekolahkelascontroller, identityData['school_class']);
+      _preFill(alamatcontroller, identityData['address']);
+      _preFill(ortuwalicontroller, identityData['parent_name']);
+      _preFill(kontakcontroller, identityData['contact_number']);
+      if (identityData['gender'] != null) {
+        setState(() {
+          selectedGender = identityData['gender'];
+        });
+      }
+      if (identityData['birth_date'] != null) {
+        try {
+          final birthDate = DateTime.parse(identityData['birth_date']);
+          selectedDate = birthDate;
+          tanggallahircontroller.text =
+              DateFormat('d MMMM yyyy').format(birthDate);
+          final now = DateTime.now();
+          int age = now.year - birthDate.year;
+          if (now.month < birthDate.month ||
+              (now.month == birthDate.month && now.day < birthDate.day)) {
+            age--;
+          }
+          usiacontroller.text = '$age Tahun';
+        } catch (_) {}
+      }
+    }
+    // Anda bisa menambahkan pre-fill untuk antropometriData dan tabel lain jika diperlukan
+  }
 
   @override
   void initState() {
@@ -47,6 +195,7 @@ class _IdentitasremajaState extends State<Identitasremaja> {
     ortuwalicontroller = TextEditingController();
     kontakcontroller = TextEditingController();
     super.initState();
+    _loadExistingData();
   }
 
   @override
@@ -150,6 +299,11 @@ class _IdentitasremajaState extends State<Identitasremaja> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(

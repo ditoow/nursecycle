@@ -50,15 +50,20 @@ class RegisterpageState extends State<Registerpage> {
       _isLoading = true;
     });
 
+    final Map<String, dynamic> metadata = {
+      'username': usernamecontroller.text.trim(),
+      'role': selectedRole,
+    };
+
+    print('DEBUG: Checking registration payload...');
+    print('Payload: $metadata');
+
     try {
-      // Mendaftar ke Supabase
+// Mendaftar ke Supabase
       final response = await Supabase.instance.client.auth.signUp(
         email: emailcontroller.text.trim(),
         password: passwordcontroller.text.trim(),
-        data: {
-          'username': usernamecontroller.text.trim(),
-          'role': selectedRole, // Menyimpan role (nurse/patient)
-        },
+        data: metadata, // ✅ GUNAKAN VARIABEL METADATA (Bukan membuat map baru)
       );
 
       if (mounted) {

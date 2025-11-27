@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/screens/home/nurse_homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/theme.dart';
 import 'package:nursecycle/screens/auth/loginpage.dart';
@@ -44,7 +45,7 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: Supabase.instance.client.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        // Saat loading awal
+        // 1. Loading saat inisialisasi auth
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
@@ -53,28 +54,42 @@ class AuthGate extends StatelessWidget {
         final session = snapshot.data?.session;
 
         if (session != null) {
-          // User sudah login -> Masuk ke MainPage
-          return const Mainpage();
+          // 2. User Login -> Cek Role di Database
+          return FutureBuilder<Map<String, dynamic>>(
+            future: Supabase.instance.client
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single(),
+            builder: (context, roleSnapshot) {
+              // Loading saat fetch role
+              if (roleSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()));
+              }
+
+              // Jika ada error atau data kosong, fallback ke Pasien (atau Error Page)
+              if (roleSnapshot.hasError || !roleSnapshot.hasData) {
+                // Opsional: Bisa logout paksa jika role tidak ketemu
+                // Supabase.instance.client.auth.signOut();
+                return const Mainpage();
+              }
+
+              final role = roleSnapshot.data!['role'] as String?;
+
+              // 3. Routing Berdasarkan Role
+              if (role == 'nurse') {
+                return const NurseHomePage();
+              } else {
+                return const Mainpage(); // Pasien
+              }
+            },
+          );
         } else {
-          // User belum login -> Masuk ke LoginPage
+          // 4. Belum Login -> Halaman Login
           return const Loginpage();
         }
       },
     );
   }
 }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       title: 'Nursecycle',
-//       theme: AppTheme.lightTheme,
-//       home: Registerpage(),
-//     );
-//   }
-// }

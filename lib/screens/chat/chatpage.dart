@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
-import 'package:nursecycle/models/chatmessage.dart';
+// import 'package:nursecycle/models/chatmessage.dart';
 import 'package:nursecycle/screens/chat/widgets/attachment.dart';
 import 'package:nursecycle/screens/chat/widgets/chatbubble.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Chatpage extends StatefulWidget {
-  const Chatpage({super.key});
+  final String roomId;
+  final String receiverName;
+  final bool isNurseView; // Flag: apakah ini dilihat dari sisi perawat?
+
+  const Chatpage({
+    super.key,
+    required this.roomId,
+    required this.receiverName,
+    required this.isNurseView,
+  });
 
   @override
   State<Chatpage> createState() => _ChatpageState();
@@ -15,78 +25,70 @@ class _ChatpageState extends State<Chatpage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  List<ChatMessage> messages = [
-    ChatMessage(
-      text: 'Halo Alexa! 👋 Saya Admin Kesehatan. Ada yang bisa saya bantu?',
-      isFromAdmin: true,
-      time: '09:30',
-    ),
-    ChatMessage(
-      text: 'Hai dok, saya mau konsultasi tentang siklus haid saya',
-      isFromAdmin: false,
-      time: '09:32',
-    ),
-    ChatMessage(
-      text:
-          'Baik, silakan ceritakan keluhan Anda. Apakah ada yang tidak normal dengan siklus haid Anda?',
-      isFromAdmin: true,
-      time: '09:33',
-    ),
-  ];
+  Stream<List<Map<String, dynamic>>>? _messagesStream;
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  Future<void> _sendMessage() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || _messageController.text.trim().isEmpty) return;
 
-    setState(() {
-      messages.add(
-        ChatMessage(
-          text: _messageController.text,
-          isFromAdmin: false,
-          time: TimeOfDay.now().format(context),
-        ),
-      );
-    });
+    // Ambil ID perawat/pasien dari user yang sedang login
+    final senderId = user.id;
 
-    _messageController.clear();
+    final messageText = _messageController.text.trim();
+    _messageController.clear(); // Hapus pesan segera
 
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
+    // Reset state untuk mematikan tombol send (opsional)
+    if (mounted) setState(() {});
 
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      await Supabase.instance.client.from('chat_messages').insert({
+        'room_id': widget.roomId,
+        'sender_id': senderId,
+        'content': messageText,
+        // 'is_read': false, (Akan diupdate oleh receiver)
+      });
+
+      // Opsional: Update last_message_at di chat_rooms
+      await Supabase.instance.client
+          .from('chat_rooms')
+          .update({'last_message_at': DateTime.now().toIso8601String()}).eq(
+              'id', widget.roomId);
+    } catch (e) {
       if (mounted) {
-        setState(() {
-          messages.add(
-            ChatMessage(
-              text: 'Terima kasih atas informasinya. Saya akan membantu Anda.',
-              isFromAdmin: true,
-              time: TimeOfDay.now().format(context),
-            ),
-          );
-        });
-
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        // Tampilkan error jika gagal kirim ke DB
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal kirim pesan: ${e.toString()}')));
       }
-    });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _messagesStream = Supabase.instance.client
+        .from('chat_messages')
+        .stream(primaryKey: ['id'])
+        .eq('room_id', widget.roomId)
+        .order('created_at', ascending: true);
   }
 
   @override
   void dispose() {
+    // ✅ 3. Dispose hanya untuk bersih-bersih controller
     _messageController.dispose();
     _scrollController.dispose();
+    // (Jangan ada inisialisasi stream di sini)
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    if (_messagesStream == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -173,17 +175,48 @@ class _ChatpageState extends State<Chatpage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                return ChatBubble(
-                  text: message.text,
-                  time: message.time,
-                  isFromAdmin: message.isFromAdmin,
-                  primaryColor: primaryColor,
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _messagesStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Mulai percakapan baru.'));
+                }
+
+                final messages = snapshot.data!;
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                });
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final senderIsCurrentUser =
+                        message['sender_id'] == currentUserId;
+
+                    return ChatBubble(
+                      text: message['content'] as String,
+                      time: TimeOfDay.fromDateTime(
+                              DateTime.parse(message['created_at']))
+                          .format(context),
+                      // isFromAdmin ditentukan berdasarkan role pengirim vs current user
+                      isFromAdmin: widget.isNurseView
+                          ? !senderIsCurrentUser
+                          : !senderIsCurrentUser,
+                      primaryColor: primaryColor,
+                      // ...
+                    );
+                  },
                 );
               },
             ),

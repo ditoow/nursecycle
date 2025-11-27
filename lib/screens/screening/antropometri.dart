@@ -4,16 +4,7 @@ import 'package:nursecycle/models/screening_data.dart';
 import 'package:nursecycle/screens/screening/pubertasperempuan/pubertasperempuan.dart';
 import 'package:nursecycle/screens/screening/pubertaslaki/pubertaslaki.dart';
 import 'package:nursecycle/screens/screening/widgets/formscreening.dart';
-
-final TextEditingController tinggicontroller = TextEditingController();
-final TextEditingController beratcontroller = TextEditingController();
-final TextEditingController imtcontroller = TextEditingController();
-final TextEditingController statusgizicontroller = TextEditingController();
-final TextEditingController pertumbuhancontroller = TextEditingController();
-final TextEditingController lingkarpinggangcontroller = TextEditingController();
-final TextEditingController darahcontroller = TextEditingController();
-final TextEditingController denyutcontroller = TextEditingController();
-final TextEditingController kroniscontroller = TextEditingController();
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Antropometri extends StatefulWidget {
   final String gender;
@@ -38,7 +29,7 @@ class _AntropometriState extends State<Antropometri> {
   late final TextEditingController kroniscontroller;
 
   bool isLoading = false;
-
+  bool _isDataLoading = true;
   String kategoriimt = "";
 
   void _hitungIMT() {
@@ -71,6 +62,85 @@ class _AntropometriState extends State<Antropometri> {
     }
   }
 
+  void _preFillFromModel() {
+    final data = widget.initialData;
+    // Masukkan data yang sudah ada di model ke Controller
+    if (data.heightCm != null) {
+      tinggicontroller.text = data.heightCm!.toString();
+      beratcontroller.text = data.weightKg!.toString();
+
+      // Data Pemeriksaan Fisik
+      pertumbuhancontroller.text = data.growthSpeed?.toString() ?? '';
+      lingkarpinggangcontroller.text = data.waistCircCm?.toString() ?? '';
+      denyutcontroller.text = data.pulseRate?.toString() ?? '';
+      kroniscontroller.text = data.chronicDisease ?? '';
+
+      // Tekanan Darah
+      if (data.systolicBp != null && data.diastolicBp != null) {
+        darahcontroller.text = '${data.systolicBp}/${data.diastolicBp}';
+      }
+      // IMT dan Status Gizi akan diisi oleh _hitungIMT() di PostFrameCallback
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final data = widget.initialData;
+
+    // 1. Mulai loading (untuk menampilkan spinner)
+    if (mounted) setState(() => _isDataLoading = true);
+
+    // 2. Cek apakah model yang dibawa sudah berisi data (Sesi Back/Forward)
+    if (data.heightCm != null && data.weightKg != null) {
+      // Data SUDAH ada di model, kita asumsikan ini yang paling up-to-date di sesi ini.
+    }
+
+    // 3. Jika model kosong, coba ambil dari DB (User kembali ke form/sesi lama)
+    else if (user != null) {
+      try {
+        final response = await Supabase.instance.client
+            .from('screening_antropometri')
+            .select()
+            .eq('user_id', user.id)
+            .order('created_at', ascending: false) // Ambil record terbaru
+            .limit(1);
+
+        if (response.isNotEmpty) {
+          final dbData = response.first;
+
+          // 4. Update Model dengan data DB (PENTING: agar data bisa di-save di Final Submit)
+          data.heightCm = dbData['height_cm'] as double?;
+          data.weightKg = dbData['weight_kg'] as double?;
+          data.imt = dbData['imt'] as double?;
+          data.statusGizi = dbData['status_gizi'] as String?;
+          data.growthSpeed = dbData['growth_speed'] as double?;
+          data.waistCircCm = dbData['waist_circ_cm'] as double?;
+          data.pulseRate = dbData['pulse_rate'] as int?;
+          data.chronicDisease = dbData['chronic_disease'] as String?;
+
+          if (dbData['blood_pressure'] is String) {
+            final bp = (dbData['blood_pressure'] as String).split('/');
+            if (bp.length == 2) {
+              data.systolicBp = int.tryParse(bp[0].trim());
+              data.diastolicBp = int.tryParse(bp[1].trim());
+            }
+          }
+        }
+      } catch (e) {
+        if (mounted) print('Gagal fetch DB Antropometri: ${e.toString()}');
+      }
+    }
+
+    // 5. Final UI update (Gunakan PostFrameCallback untuk _hitungIMT)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Panggil helper pre-fill yang baru dipisahkan
+      _preFillFromModel();
+      // Panggil hitung IMT untuk memastikan status gizi terisi
+      _hitungIMT();
+      if (mounted) setState(() => _isDataLoading = false);
+    });
+  }
+
   @override
   void initState() {
     tinggicontroller = TextEditingController();
@@ -86,6 +156,8 @@ class _AntropometriState extends State<Antropometri> {
     super.initState();
     tinggicontroller.addListener(_hitungIMT);
     beratcontroller.addListener(_hitungIMT);
+
+    _loadInitialData();
   }
 
   @override
@@ -147,14 +219,6 @@ class _AntropometriState extends State<Antropometri> {
 
       // --- NAVIGASI DAN SUKSES ---
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Data Antropometri terkumpul di memori.'),
-              backgroundColor:
-                  Colors.blueGrey // Warna berbeda karena belum save ke DB
-              ),
-        );
-
         // Lanjutkan ke halaman pubertas sambil membawa model yang SUDAH TERISI
         if (widget.gender == 'laki') {
           // Catatan: Pubertaslaki harus diupdate untuk menerima 'screeningData'
@@ -193,6 +257,11 @@ class _AntropometriState extends State<Antropometri> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isDataLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(

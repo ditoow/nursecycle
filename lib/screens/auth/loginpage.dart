@@ -45,17 +45,6 @@ class LoginpageState extends State<Loginpage> {
         email: identifiercontroller.text.trim(),
         password: passwordcontroller.text.trim(),
       );
-
-      if (mounted) {
-        // Jika sukses, pindah ke MainPage
-        // Menggunakan pushReplacement agar user tidak bisa back ke halaman login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Mainpage(),
-          ),
-        );
-      }
     } on AuthException catch (e) {
       // Error spesifik dari Supabase (misal: password salah)
       if (mounted) {

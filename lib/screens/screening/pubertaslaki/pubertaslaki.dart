@@ -82,41 +82,188 @@ class _PubertaslakiState extends State<Pubertaslaki> {
   void initState() {
     super.initState();
 
-    PubertasLakiControllers.ukuranTestisController.text =
-        selectedUkuranTestis ?? '';
-    PubertasLakiControllers.rambutKemaluanController.text =
-        selectedRambutKemaluan ?? '';
-    PubertasLakiControllers.rambutKetiakController.text =
-        selectedRambutKetiak ?? '';
-    PubertasLakiControllers.perubahanSuaraController.text =
-        selectedPerubahanSuara ?? '';
-    PubertasLakiControllers.pertumbuhanKumisController.text =
-        selectedPertumbuhanKumis ?? '';
-    PubertasLakiControllers.testisSimetrisController.text =
-        selectedTestisSimetris ?? '';
-    PubertasLakiControllers.testisTurunController.text =
-        selectedTestisTurun ?? '';
-    PubertasLakiControllers.ginekomastiaController.text =
-        selectedGinekomastia ?? '';
-    PubertasLakiControllers.jerawatController.text = selectedJerawat ?? '';
-    PubertasLakiControllers.pertumbuhanCepatController.text =
-        selectedPertumbuhanCepat ?? '';
-    PubertasLakiControllers.nafsuMakanController.text =
-        selectedNafsuMakan ?? '';
-    PubertasLakiControllers.mimpiBasahController.text =
-        selectedMimpiBasah ?? '';
-    PubertasLakiControllers.perubahanTidurController.text =
-        selectedPerubahanTidur ?? '';
-    PubertasLakiControllers.emosiSulitController.text =
-        selectedEmosiSulit ?? '';
-    PubertasLakiControllers.perilakuAgresifController.text =
-        selectedPerilakuAgresif ?? '';
-    PubertasLakiControllers.masalahPercayaDiriController.text =
-        selectedMasalahPercayaDiri ?? '';
-    PubertasLakiControllers.ketertarikanLawanJenisController.text =
-        selectedKetertarikanLawanJenis ?? '';
-    PubertasLakiControllers.riwayatStresController.text =
-        selectedRiwayatStres ?? '';
+    _loadInitialData();
+    _loadOldData();
+  }
+
+  bool _isDataLoading = true;
+
+  void _loadInitialData() {
+    final data = widget.screeningData;
+
+    // Cek apakah data pubertas sudah ada di model (misalnya, jika user menekan tombol back)
+    if (data.tannerTestis != null) {
+      // 1. Seksual Sekunder
+      PubertasLakiControllers.ukuranTestisController.text =
+          data.tannerTestis ?? '';
+      PubertasLakiControllers.rambutKemaluanController.text =
+          data.tannerPubicHairMale ?? '';
+      PubertasLakiControllers.rambutKetiakController.text =
+          data.axillaryHairMale == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.perubahanSuaraController.text =
+          data.voiceChange == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.pertumbuhanKumisController.text =
+          data.beardGrowth == true ? 'Ya' : 'Tidak';
+
+      // 2. Pemeriksaan Fisik Reproduksi
+      PubertasLakiControllers.testisSimetrisController.text =
+          data.testisSymmetric == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.testisTurunController.text =
+          data.testisDescended == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.ginekomastiaController.text =
+          data.gynecomastia == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.jerawatController.text =
+          data.acneMale == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.pertumbuhanCepatController.text =
+          data.growthSpurtMale == true ? 'Ya' : 'Tidak';
+
+      // 3. Perubahan Fisiologis
+      PubertasLakiControllers.nafsuMakanController.text =
+          data.appetiteIncreased == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.mimpiBasahController.text =
+          data.wetDreams == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.perubahanTidurController.text =
+          data.sleepChangeMale == true ? 'Ya' : 'Tidak';
+
+      // 4. Psikologis dan Sosial
+      PubertasLakiControllers.emosiSulitController.text =
+          data.emotionUncontrolled == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.perilakuAgresifController.text =
+          data.aggressiveLonely ?? '';
+      PubertasLakiControllers.masalahPercayaDiriController.text =
+          data.selfConfidenceIssue == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.ketertarikanLawanJenisController.text =
+          data.oppositeSexInterest == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.riwayatStresController.text =
+          data.stressHistoryMale ?? '';
+
+      // Karena kita mengupdate static controller, kita tidak perlu setState()
+    }
+  }
+
+  Future<void> _loadOldData() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final data = widget.screeningData;
+
+    // Cek apakah model yang dibawa sudah berisi data pubertas (berarti user menekan tombol BACK)
+    if (data.tannerTestis != null) {
+      // Data sudah ada di model, langsung pre-fill controllers.
+      _loadInitialData(); // Fungsi yang sudah Anda buat untuk mengisi controller dari model
+      if (mounted) setState(() => _isDataLoading = false);
+      return;
+    }
+
+    // Jika model kosong, coba ambil dari DB (User memulai/melanjutkan sesi dari Antropometri)
+    if (user != null) {
+      try {
+        // Ambil data terbaru dari 3 tabel Pubertas
+        final results = await Future.wait([
+          Supabase.instance.client
+              .from('screening_puberty_male_tanner')
+              .select()
+              .eq('user_id', user.id)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle(),
+          Supabase.instance.client
+              .from('screening_puberty_male_fisik')
+              .select()
+              .eq('user_id', user.id)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle(),
+          Supabase.instance.client
+              .from('screening_puberty_male_psikososial')
+              .select()
+              .eq('user_id', user.id)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle(),
+        ]);
+
+        // Update model dan controllers jika ada data dari DB
+        _mapDbToModelAndControllers(results);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text('Gagal memuat data pubertas dari DB: ${e.toString()}')));
+        }
+      }
+    }
+
+    if (mounted) setState(() => _isDataLoading = false);
+  }
+
+  void _mapDbToModelAndControllers(List<Map<String, dynamic>?> results) {
+    final data = widget.screeningData;
+    final tannerData = results[0];
+    final fisikData = results[1];
+    final sosialData = results[2];
+
+    // Jika ada data Tanner dari DB, masukkan ke model dan controller
+    if (tannerData != null) {
+      // Update Model (agar data tersimpan di memori saat ini)
+      data.tannerTestis = tannerData['tanner_testis'];
+      data.tannerPubicHairMale = tannerData['tanner_pubic_hair'];
+      data.axillaryHairMale = tannerData['axillary_hair'];
+      data.voiceChange = tannerData['voice_change'];
+      // ... (update semua field di model)
+
+      // Update Controllers (untuk tampilan)
+      PubertasLakiControllers.ukuranTestisController.text =
+          tannerData['tanner_testis'] ?? '';
+      PubertasLakiControllers.rambutKemaluanController.text =
+          tannerData['tanner_pubic_hair'] ?? '';
+      PubertasLakiControllers.rambutKetiakController.text =
+          tannerData['axillary_hair'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.perubahanSuaraController.text =
+          tannerData['voice_change'] == true ? 'Ya' : 'Tidak';
+      // ... (update semua controllers)
+    }
+
+    if (fisikData != null) {
+      // Update Model
+      data.testisSymmetric = fisikData['testis_symmetric'];
+      data.testisDescended = fisikData['testis_descended'];
+      data.gynecomastia = fisikData['gynecomastia'];
+      data.acneMale = fisikData['acne'];
+      // ... (update semua field di model)
+
+      // Update Controllers
+      PubertasLakiControllers.testisSimetrisController.text =
+          fisikData['testis_symmetric'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.testisTurunController.text =
+          fisikData['testis_descended'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.ginekomastiaController.text =
+          fisikData['gynecomastia'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.jerawatController.text =
+          fisikData['acne'] == true ? 'Ya' : 'Tidak';
+      // ... (update semua controllers)
+    }
+
+    if (sosialData != null) {
+      // Update Model
+      data.emotionUncontrolled = sosialData['emotion_uncontrolled'];
+      data.aggressiveLonely = sosialData['aggressive_lonely'];
+      data.selfConfidenceIssue = sosialData['self_confidence_issue'];
+      data.oppositeSexInterest = sosialData['opposite_sex_interest'];
+      data.stressHistoryMale = sosialData['stress_history'];
+      // ... (update semua field di model)
+
+      // Update Controllers
+      PubertasLakiControllers.emosiSulitController.text =
+          sosialData['emotion_uncontrolled'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.perilakuAgresifController.text =
+          sosialData['aggressive_lonely'] ?? '';
+      PubertasLakiControllers.masalahPercayaDiriController.text =
+          sosialData['self_confidence_issue'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.ketertarikanLawanJenisController.text =
+          sosialData['opposite_sex_interest'] == true ? 'Ya' : 'Tidak';
+      PubertasLakiControllers.riwayatStresController.text =
+          sosialData['stress_history'] == true ? 'Ya' : 'Tidak';
+      // ... (update semua controllers)
+    }
   }
 
   Future<void> _finalSubmit() async {
@@ -279,6 +426,11 @@ class _PubertaslakiState extends State<Pubertaslaki> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isDataLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(

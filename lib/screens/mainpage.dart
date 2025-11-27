@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/screens/article/articlepage.dart';
-import 'package:nursecycle/screens/chat/chatpage.dart';
+import 'package:nursecycle/screens/chat/chatqueuepage.dart';
 import 'package:nursecycle/screens/home/homepage.dart';
 import 'package:nursecycle/screens/kalender/kalenderpage.dart';
 
@@ -18,7 +18,7 @@ class _MainpageState extends State<Mainpage> {
   static const List<Widget> _pages = <Widget>[
     Homepage(),
     Kalenderpage(),
-    Chatpage(),
+    ChatQueuePage(),
     // MonitorPage(),
     ArticlePage(),
     // ProfilPage(),

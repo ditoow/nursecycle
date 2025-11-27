@@ -3,6 +3,7 @@ import 'package:nursecycle/core/colorconfig.dart';
 import 'package:nursecycle/screens/chat/chatpage.dart';
 import 'package:nursecycle/screens/home/widgets/kalenderhaid.dart';
 import 'package:nursecycle/screens/screening/identitasremaja.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -12,12 +13,84 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
+  bool _isStartingChat = false;
+
   final List<String> healthData = [
     'Tidak ada keluhan',
     'Tekanan darah: Normal',
     'Suhu tubuh: 36.5°C',
     'Nadi: 80 bpm',
   ];
+
+  Future<void> _signOut() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      // AuthGate akan mendeteksi perubahan state dan mengarahkan ke LoginPage
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal logout: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _startChat() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || mounted == false) return; // Cek user login
+
+    setState(() => _isStartingChat = true);
+
+    try {
+      // 1. Cek apakah room sudah ada
+      var response = await Supabase.instance.client
+          .from('chat_rooms')
+          .select('id')
+          .eq('patient_id', user.id)
+          .limit(1)
+          .maybeSingle(); // Menggunakan maybeSingle() agar aman jika data kosong
+
+      String roomId;
+
+      // 2. Jika room belum ada, buat room baru
+      if (response == null) {
+        final newRoom = await Supabase.instance.client
+            .from('chat_rooms')
+            .insert({
+              'patient_id': user.id,
+              'last_message_at': DateTime.now().toIso8601String()
+            })
+            .select('id')
+            .single();
+
+        roomId = newRoom['id'] as String;
+      } else {
+        roomId = response['id'] as String;
+      }
+
+      // 3. Navigasi ke halaman chat dengan parameter yang dibutuhkan
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Chatpage(
+              roomId: roomId,
+              receiverName: 'Admin Kesehatan', // Nama lawan bicara
+              isNurseView: false, // Pasien
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memulai chat: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isStartingChat = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +171,13 @@ class _HomepageState extends State<Homepage> {
             ],
           ),
           const SizedBox(width: 8),
+          IconButton(
+              onPressed: _signOut,
+              icon: const Icon(
+                Icons.logout,
+                color: Colors.white,
+                size: 28,
+              )),
         ],
       ),
       body: SingleChildScrollView(
@@ -248,14 +328,7 @@ class _HomepageState extends State<Homepage> {
                           borderRadius: BorderRadius.circular(12),
                           elevation: 2,
                           child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => Chatpage(),
-                                ),
-                              );
-                            },
+                            onTap: _isStartingChat ? null : _startChat,
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               height: 110,
