@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/core/colorconfig.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:nursecycle/screens/chat/chatpage.dart';
 
 class ChatQueuePage extends StatefulWidget {
-  const ChatQueuePage({super.key});
+  final bool isEmbedded;
+  const ChatQueuePage({super.key, this.isEmbedded = false});
 
   @override
   State<ChatQueuePage> createState() => _ChatQueuePageState();
@@ -66,81 +68,151 @@ class _ChatQueuePageState extends State<ChatQueuePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Kita tidak perlu Scaffold/AppBar lagi karena sudah ada di NurseHomePage
-    // Langsung kembalikan StreamBuilder
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _getChatRoomsStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-              child: Text('Belum ada data konsultasi.',
-                  style: TextStyle(color: Colors.grey)));
-        }
-
-        final allRooms = snapshot.data!;
-
-        // 1. FILTER: Antrian Baru (Belum ada yang klaim)
-        final newQueue =
-            allRooms.where((room) => room['assigned_to_id'] == null).toList();
-
-        // 2. FILTER: Chat Saya (Diklaim oleh perawat ini)
-        final myChats = allRooms
-            .where((room) => room['assigned_to_id'] == currentNurseId)
-            .toList();
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(
-              bottom: 80), // Spasi bawah agar tidak tertutup
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // === BAGIAN 1: CHAT SAYA (YANG SUDAH DI-CLAIM) ===
-              if (myChats.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Text(
-                    "Chat Aktif Saya",
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87),
+    return Scaffold(
+      backgroundColor: Colors.grey[50], // Background bersih
+      // Kita menggunakan Column untuk Header + List
+      body: Column(
+        children: [
+          if (!widget.isEmbedded)
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: primaryColor,
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 30),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text("Antrian Konsultasi",
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
+                      SizedBox(height: 8),
+                      Text("Kelola chat pasien yang masuk",
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white70)),
+                    ],
                   ),
                 ),
-                ...myChats
-                    .map((room) => _buildChatTile(room, isMyChat: true))
-                    .toList(),
-                const SizedBox(height: 20), // Jarak antar seksi
-              ],
+              ),
+            ),
 
-              // === BAGIAN 2: ANTRIAN BARU (BELUM DI-CLAIM) ===
-              if (newQueue.isNotEmpty) ...[
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Text(
-                    "Antrian Konsultasi Baru",
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent),
-                  ),
-                ),
-                ...newQueue
-                    .map((room) => _buildChatTile(room, isMyChat: false))
-                    .toList(),
-              ] else if (myChats.isEmpty) ...[
-                // Jika kedua list kosong
-                const Padding(
-                  padding: EdgeInsets.only(top: 50),
-                  child: Center(child: Text("Tidak ada antrian saat ini.")),
-                )
-              ],
-            ],
+          // --- 2. ISI LIST (StreamBuilder) ---
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _getChatRoomsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.mark_chat_read_outlined,
+                            size: 64, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
+                        Text("Tidak ada antrian chat",
+                            style: TextStyle(color: Colors.grey[500])),
+                      ],
+                    ),
+                  );
+                }
+
+                final allRooms = snapshot.data!;
+                final newQueue = allRooms
+                    .where((room) => room['assigned_to_id'] == null)
+                    .toList();
+                final myChats = allRooms
+                    .where((room) => room['assigned_to_id'] == currentNurseId)
+                    .toList();
+
+                if (newQueue.isEmpty && myChats.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.done_all, size: 64, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
+                        Text("Semua chat sudah tertangani",
+                            style: TextStyle(color: Colors.grey[500])),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // === BAGIAN 1: CHAT SAYA ===
+                    if (myChats.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 12, left: 4),
+                        child: Text(
+                          "Chat Aktif Saya",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      ...myChats
+                          .map((room) => _buildChatTile(room, isMyChat: true)),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // === BAGIAN 2: ANTRIAN BARU ===
+                    if (newQueue.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12, left: 4),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "Antrian Baru",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Text(
+                                "${newQueue.length}",
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      ...newQueue
+                          .map((room) => _buildChatTile(room, isMyChat: false)),
+                    ],
+                  ],
+                );
+              },
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -162,7 +234,7 @@ class _ChatQueuePageState extends State<ChatQueuePage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),

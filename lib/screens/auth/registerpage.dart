@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/colorconfig.dart';
@@ -36,7 +38,6 @@ class RegisterpageState extends State<Registerpage> {
   }
 
   Future<void> _signUp() async {
-    // Validasi input kosong sederhana
     if (emailcontroller.text.isEmpty ||
         passwordcontroller.text.isEmpty ||
         usernamecontroller.text.isEmpty) {
@@ -55,9 +56,6 @@ class RegisterpageState extends State<Registerpage> {
       'role': selectedRole,
     };
 
-    print('DEBUG: Checking registration payload...');
-    print('Payload: $metadata');
-
     try {
 // Mendaftar ke Supabase
       final response = await Supabase.instance.client.auth.signUp(
@@ -67,49 +65,39 @@ class RegisterpageState extends State<Registerpage> {
       );
 
       if (mounted) {
-        // Cek apakah butuh konfirmasi email atau tidak
         if (response.session == null) {
-          // Jika Supabase setting "Enable Email Confirm" = ON
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Registrasi berhasil! Cek email untuk verifikasi."),
               backgroundColor: Colors.green,
             ),
           );
-          // Lempar ke halaman login
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const Loginpage()),
           );
         } else {
-          // Jika Supabase setting "Enable Email Confirm" = OFF (Langsung login)
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text("Akun berhasil dibuat!"),
               backgroundColor: Colors.green,
             ),
           );
-          // Tidak perlu navigasi manual karena AuthGate di main.dart akan otomatis mendeteksi session baru
-          // Tapi kita bisa pop halaman register ini agar stack bersih
           Navigator.of(context).pop();
         }
       }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Terjadi kesalahan tidak terduga"),
-            backgroundColor: Colors.red,
-          ),
+              content: Text("Terjadi kesalahan tidak terduga"),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -123,189 +111,167 @@ class RegisterpageState extends State<Registerpage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: buildBody(),
-    );
-  }
-
-  Widget buildBody() {
     final screenHeight = MediaQuery.of(context).size.height;
+    final paddingVertical = screenHeight * 0.02;
 
-    return SingleChildScrollView(
-      child: Stack(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: screenHeight * 0.42,
-            child: Image.asset("assets/images/bgsignup.png", fit: BoxFit.cover),
-          ),
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: screenHeight,
+            ),
+            child: IntrinsicHeight(
+              child: Stack(
                 children: [
-                  SizedBox(height: screenHeight * 0.22),
-                  Text(
-                    "Sign Up",
-                    style: TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.42,
+                    child: Image.asset("assets/images/bgsignup.png",
+                        fit: BoxFit.cover),
                   ),
-                  SizedBox(height: 6),
-                  Image.asset("assets/images/pinkline.png"),
-                  SizedBox(height: 36),
-                  username(usernamecontroller),
-                  SizedBox(height: 24),
-                  email(emailcontroller),
-                  SizedBox(height: 24),
-                  Text(
-                    "Password",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  SizedBox(
-                    height: 32,
-                    width: double.infinity,
-                    child: TextField(
-                      controller: passwordcontroller,
-                      style: TextStyle(fontSize: 14),
-                      obscureText: obscurePassword,
-                      decoration: InputDecoration(
-                        border: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor, width: 2),
-                        ),
-                        focusColor: primaryColor,
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                        labelText: "Password",
-                        labelStyle: TextStyle(fontSize: 14),
-                        hintText: "Masukkan Password",
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            size: 16,
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: screenHeight * 0.22,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              obscurePassword = !obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  Text(
-                    "Register as",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(
-                            'Nurse',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          value: 'nurse',
-                          groupValue: selectedRole,
-                          activeColor: primaryColor,
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRole = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(
-                            'Patient',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                          value: 'patient',
-                          groupValue: selectedRole,
-                          activeColor: primaryColor,
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRole = value!;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: screenHeight * 0.06),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          primaryColor, // Pastikan primaryColor ada
-                      foregroundColor: Colors.white, // Warna text putih
-                      minimumSize: Size(screenHeight, 48),
-                      elevation: 4,
-                      fixedSize: const Size(274, 48),
-                    ),
-                    onPressed: _isLoading ? null : _signUp,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                          const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.bold,
                             ),
-                          )
-                        : const Text(
-                            "Create Account",
-                            style: TextStyle(fontSize: 14),
                           ),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Already have an account? "),
-                      SizedBox(width: 4),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => Loginpage()));
-                        },
-                        child: Text(
-                          "Login",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 6),
+                          Image.asset("assets/images/pinkline.png"),
+                          const Spacer(),
+                          username(usernamecontroller),
+                          SizedBox(height: paddingVertical),
+                          email(emailcontroller),
+                          SizedBox(height: paddingVertical),
+                          const Text("Password",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                          TextField(
+                            controller: passwordcontroller,
+                            obscureText: obscurePassword,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                              border: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: primaryColor)),
+                              focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: primaryColor, width: 2)),
+                              hintText: "Masukkan Password",
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                    obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    size: 20),
+                                onPressed: () => setState(
+                                    () => obscurePassword = !obscurePassword),
+                              ),
+                            ),
                           ),
-                        ),
+                          SizedBox(height: paddingVertical),
+                          const Text("Register as",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: const Text('Nurse',
+                                      style: TextStyle(fontSize: 14)),
+                                  value: 'nurse',
+                                  groupValue: selectedRole,
+                                  activeColor: primaryColor,
+                                  contentPadding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                  onChanged: (val) =>
+                                      setState(() => selectedRole = val!),
+                                ),
+                              ),
+                              Expanded(
+                                child: RadioListTile<String>(
+                                  title: const Text('Patient',
+                                      style: TextStyle(fontSize: 14)),
+                                  value: 'patient',
+                                  groupValue: selectedRole,
+                                  activeColor: primaryColor,
+                                  contentPadding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                  onChanged: (val) =>
+                                      setState(() => selectedRole = val!),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: _isLoading ? null : _signUp,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
+                                  : const Text("Create Account",
+                                      style: TextStyle(fontSize: 16)),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("Already have an account? "),
+                              InkWell(
+                                onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (c) => const Loginpage())),
+                                child: Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                       ),
-                    ],
-                  )
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -315,19 +281,12 @@ Widget username(TextEditingController controller) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        "Username",
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      SizedBox(height: 8),
-      ttextfield(
-        controller: controller,
-        label: "Username",
-        hintText: "Masukkan username",
-      ),
+      const Text("Username",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      TTextField(
+          controller: controller,
+          label: "Username",
+          hintText: "Masukkan username"),
     ],
   );
 }
@@ -336,19 +295,10 @@ Widget email(TextEditingController controller) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        "Email",
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      SizedBox(height: 8),
-      ttextfield(
-        controller: controller,
-        label: "Email",
-        hintText: "Masukkan email",
-      )
+      const Text("Email",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      TTextField(
+          controller: controller, label: "Email", hintText: "Masukkan email")
     ],
   );
 }

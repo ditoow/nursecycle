@@ -39,6 +39,7 @@ dependencies:
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^6.0.0
   timeago: ^3.7.1
+  table_calendar: ^3.2.0
 
 dev_dependencies:
   flutter_test:

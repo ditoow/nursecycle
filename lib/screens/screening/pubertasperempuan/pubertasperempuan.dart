@@ -134,9 +134,10 @@ class _PubertasperempuanState extends State<Pubertasperempuan> {
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Sesi habis. Silakan login ulang.')));
+      }
       return;
     }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 
-class ttextfield extends StatelessWidget {
+class TTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String? hintText;
@@ -11,7 +11,7 @@ class ttextfield extends StatelessWidget {
   final IconData? suffixIcon;
   // final VoidCallback? onSuffixTap;
 
-  const ttextfield({
+  const TTextField({
     super.key,
     required this.controller,
     required this.label,
@@ -45,7 +45,7 @@ class ttextfield extends StatelessWidget {
           ),
           focusColor: primaryColor,
           floatingLabelBehavior: FloatingLabelBehavior.never,
-          contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 14),
           // border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           labelText: label,
           labelStyle: TextStyle(fontSize: 14),

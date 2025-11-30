@@ -1,7 +1,9 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:nursecycle/screens/mainpage.dart';
+// import 'package:nursecycle/screens/mainpage.dart';
 import 'package:nursecycle/screens/auth/registerpage.dart';
 import 'package:nursecycle/screens/auth/widgets/_textfields.dart';
 
@@ -40,13 +42,48 @@ class LoginpageState extends State<Loginpage> {
     });
 
     try {
-      // Melakukan login dengan Email dan Password
+      // 1. Login ke Supabase
       await Supabase.instance.client.auth.signInWithPassword(
         email: identifiercontroller.text.trim(),
         password: passwordcontroller.text.trim(),
       );
+
+      // 2. ✅ TAMBAHAN WAJIB: Cek & Buat Profile (Fallback karena Trigger mati)
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        // Cek apakah data profile sudah ada
+        final profileCheck = await Supabase.instance.client
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        // Jika Profile TIDAK ADA, buat secara manual sekarang
+        if (profileCheck == null) {
+          // Ambil nama dari metadata (jika ada) atau dari email
+          final username =
+              user.userMetadata?['username'] ?? user.email!.split('@')[0];
+          final role =
+              user.userMetadata?['role'] ?? 'patient'; // Default patient
+
+          await Supabase.instance.client.from('profiles').insert({
+            'id': user.id,
+            'username': username,
+            'role': role,
+            'full_name': username, // Fallback full_name
+            'created_at': DateTime.now().toIso8601String(),
+          });
+        }
+      }
+
+      if (mounted) {
+        // ✅ HANYA TAMPILKAN SNACKBAR. JANGAN NAVIGASI.
+        // AuthGate akan mendeteksi sesi baru secara otomatis.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login Berhasil!")),
+        );
+      }
     } on AuthException catch (e) {
-      // Error spesifik dari Supabase (misal: password salah)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -56,7 +93,6 @@ class LoginpageState extends State<Loginpage> {
         );
       }
     } catch (e) {
-      // Error umum lainnya
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -83,135 +119,143 @@ class LoginpageState extends State<Loginpage> {
 
   Widget buildBody() {
     final screenHeight = MediaQuery.of(context).size.height;
+    final paddingVertical = screenHeight * 0.02;
 
-    return SingleChildScrollView(
-      child: Stack(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: screenHeight * 0.42,
-            child: Image.asset("assets/images/bgsignup.png", fit: BoxFit.cover),
-          ),
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return GestureDetector(
+      onTap: () =>
+          FocusScope.of(context).unfocus(), // Tutup keyboard saat tap luar
+      child: Scaffold(
+        // ✅ Izinkan resize agar keyboard tidak menutupi input
+        resizeToAvoidBottomInset: true,
+        body: SingleChildScrollView(
+          child: ConstrainedBox(
+            // ✅ Pastikan container minimal setinggi layar
+            constraints: BoxConstraints(
+              minHeight: screenHeight,
+            ),
+            child: IntrinsicHeight(
+              child: Stack(
                 children: [
-                  SizedBox(height: screenHeight * 0.22),
-                  Text(
-                    "Sign In",
-                    style: TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // Background Image
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.42,
+                    child: Image.asset("assets/images/bgsignup.png",
+                        fit: BoxFit.cover),
                   ),
-                  SizedBox(height: 6),
-                  Image.asset("assets/images/pinkline.png"),
-                  SizedBox(height: 36),
-                  identifier(identifiercontroller),
-                  SizedBox(height: 24),
-                  Text(
-                    "Password",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  SizedBox(
-                    height: 32,
-                    width: double.infinity,
-                    child: TextField(
-                      controller: passwordcontroller,
-                      style: TextStyle(fontSize: 14),
-                      obscureText: obscurePassword,
-                      decoration: InputDecoration(
-                        border: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor, width: 2),
-                        ),
-                        focusColor: primaryColor,
-                        floatingLabelBehavior: FloatingLabelBehavior.never,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                        labelText: "Password",
-                        labelStyle: TextStyle(fontSize: 14),
-                        hintText: "Masukkan Password",
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            size: 16,
+
+                  // Content
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // --- BAGIAN ATAS (Title & Form) ---
+                          SizedBox(height: screenHeight * 0.22),
+                          const Text(
+                            "Sign In",
+                            style: TextStyle(
+                                fontSize: 38, fontWeight: FontWeight.bold),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              obscurePassword = !obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.276),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          primaryColor, // Pastikan primaryColor terdefinisi
-                      foregroundColor: Colors.white,
-                      minimumSize: Size(screenHeight, 48),
-                      elevation: 4,
-                      fixedSize: const Size(274, 48),
-                    ),
-                    // Jika loading, disable tombol (null)
-                    onPressed: _isLoading ? null : _signIn,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                          const SizedBox(height: 6),
+                          Image.asset("assets/images/pinkline.png"),
+
+                          // ✅ Gunakan Spacer untuk mendorong form ke tengah
+                          SizedBox(height: screenHeight * 0.05),
+
+                          identifier(identifiercontroller),
+                          SizedBox(height: paddingVertical),
+
+                          const Text("Password",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
+
+                          TextField(
+                            controller: passwordcontroller,
+                            obscureText: obscurePassword,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                              border: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: primaryColor)),
+                              focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: primaryColor, width: 2)),
+                              hintText: "Masukkan Password",
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                    obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    size: 20),
+                                onPressed: () => setState(
+                                    () => obscurePassword = !obscurePassword),
+                              ),
                             ),
-                          )
-                        : const Text(
-                            "Login",
-                            style: TextStyle(fontSize: 14),
                           ),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Dont have an Account?"),
-                      SizedBox(width: 4),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => Registerpage()));
-                        },
-                        child: Text(
-                          "Register",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
+
+                          // ✅ Gunakan Spacer lagi untuk mendorong tombol ke bawah
+                          const Spacer(),
+
+                          // --- BAGIAN BAWAH (Tombol Login) ---
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: _isLoading ? null : _signIn,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2))
+                                  : const Text("Login",
+                                      style: TextStyle(fontSize: 16)),
+                            ),
                           ),
-                        ),
+
+                          const SizedBox(height: 16),
+
+                          // Register Link
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text("Dont have an Account?"),
+                              const SizedBox(width: 4),
+                              InkWell(
+                                onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (c) => const Registerpage())),
+                                child: Text("Register",
+                                    style: TextStyle(
+                                        color: primaryColor,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24), // Padding bawah aman
+                        ],
                       ),
-                    ],
-                  )
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -229,7 +273,7 @@ Widget identifier(TextEditingController controller) {
         ),
       ),
       SizedBox(height: 8),
-      ttextfield(
+      TTextField(
         controller: controller,
         label: "Username / Email",
         hintText: "Masukkan username atau email",

@@ -50,7 +50,7 @@ class Formscreening extends StatelessWidget {
         maxLines: maxLines, // Tambah ini
         decoration: InputDecoration(
           suffixText: suffix,
-          fillColor: const Color.fromARGB(255, 133, 42, 42).withOpacity(0.1),
+          fillColor: const Color.fromARGB(255, 133, 42, 42).withAlpha(26),
           floatingLabelBehavior: FloatingLabelBehavior.never,
           contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           border: OutlineInputBorder(

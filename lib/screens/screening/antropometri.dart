@@ -127,7 +127,7 @@ class _AntropometriState extends State<Antropometri> {
           }
         }
       } catch (e) {
-        if (mounted) print('Gagal fetch DB Antropometri: ${e.toString()}');
+        if (mounted) debugPrint('Gagal fetch DB Antropometri: ${e.toString()}');
       }
     }
 

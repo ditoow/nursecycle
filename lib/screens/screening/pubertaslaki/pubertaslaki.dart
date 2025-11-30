@@ -270,9 +270,10 @@ class _PubertaslakiState extends State<Pubertaslaki> {
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Anda harus login untuk menyimpan data.')));
+      }
       return;
     }
 

@@ -24,7 +24,7 @@ class Attachment extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha(25),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 28),

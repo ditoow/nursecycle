@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -48,8 +50,9 @@ class _IdentitasremajaState extends State<Identitasremaja> {
     if (mounted) setState(() => isLoading = true);
 
     if (user == null) {
-      if (mounted)
-        setState(() => isLoading = false); // Set false jika tidak ada user
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
       return;
     }
 

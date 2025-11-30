@@ -95,6 +95,10 @@ class _ChatpageState extends State<Chatpage> {
         backgroundColor: primaryColor,
         elevation: 0,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           children: [
             Container(
@@ -227,7 +231,7 @@ class _ChatpageState extends State<Chatpage> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withAlpha(13),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),

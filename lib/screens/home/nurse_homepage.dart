@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/screens/article/manage_articles_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/colorconfig.dart'; // Asumsi primaryColor
 import 'package:nursecycle/screens/chat/chatqueuepage.dart';
@@ -11,29 +12,23 @@ class NurseHomePage extends StatefulWidget {
 }
 
 class _NurseHomePageState extends State<NurseHomePage> {
-  // Fungsi untuk mengambil statistik real dari DB
+  // Fungsi statistik (sama seperti sebelumnya)
   Future<Map<String, String>> _fetchStats() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return {'queue': '-', 'handled': '-', 'patients': '-'};
 
     try {
-      // Jalankan 3 query sekaligus (Parallel) biar cepat
       final results = await Future.wait([
-        // 1. ANTRIAN: Status open DAN belum ada yang klaim (assigned_to_id IS NULL)
         Supabase.instance.client
             .from('chat_rooms')
             .count(CountOption.exact)
             .eq('status', 'open')
             .filter('assigned_to_id', 'is', null),
-
-        // 2. DITANGANI: Status open DAN diklaim oleh saya
         Supabase.instance.client
             .from('chat_rooms')
             .count(CountOption.exact)
             .eq('status', 'open')
             .eq('assigned_to_id', user.id),
-
-        // 3. TOTAL PASIEN: Hitung user dengan role 'patient'
         Supabase.instance.client
             .from('profiles')
             .count(CountOption.exact)
@@ -57,7 +52,6 @@ class _NurseHomePageState extends State<NurseHomePage> {
   @override
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
-    // Ambil nama dari metadata, fallback ke email
     final nurseName = user?.userMetadata?['username'] ??
         user?.email?.split('@')[0] ??
         'Perawat';
@@ -84,34 +78,49 @@ class _NurseHomePageState extends State<NurseHomePage> {
               ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Hello $nurseName",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Hello $nurseName",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    // Opsional: Tambahkan ellipsis biar rapi kalau nama sangaaat panjang
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                ),
-                const Text(
-                  "Nurse • Online",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white70,
+                  const Text(
+                    "Nurse • Online",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white70,
+                    ),
                   ),
-                ),
-              ],
-            )
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
-          // Tombol Refresh Manual (Opsional)
           IconButton(
             onPressed: () {
-              setState(() {}); // Rebuild untuk fetch ulang data
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ManageArticlesPage()));
+            },
+            icon: const Icon(Icons.edit_document,
+                color: Colors.white), // Ikon artikel
+            tooltip: "Kelola Artikel",
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {});
             },
             icon: const Icon(Icons.refresh, color: Colors.white),
           ),
@@ -122,7 +131,7 @@ class _NurseHomePageState extends State<NurseHomePage> {
       ),
       body: Column(
         children: [
-          // --- HEADER GRADIENT SECTION ---
+          // --- HEADER (Fixed Height) ---
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
@@ -156,18 +165,16 @@ class _NurseHomePageState extends State<NurseHomePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- STATISTIK CARD (DATA DARI DATABASE) ---
+                  // Statistik Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    // Gunakan FutureBuilder untuk memuat data
                     child: FutureBuilder<Map<String, String>>(
                       future: _fetchStats(),
                       builder: (context, snapshot) {
-                        // Default values (Loading / 0)
                         String antrian = '-';
                         String ditangani = '-';
                         String totalPasien = '-';
@@ -185,7 +192,6 @@ class _NurseHomePageState extends State<NurseHomePage> {
                                 "Antrian", antrian, Icons.people_outline),
                             _buildStatItem("Ditangani", ditangani,
                                 Icons.check_circle_outline),
-                            // ✅ Diganti jadi Total Pasien
                             _buildStatItem("Total Pasien", totalPasien,
                                 Icons.groups_outlined),
                           ],
@@ -198,25 +204,18 @@ class _NurseHomePageState extends State<NurseHomePage> {
             ),
           ),
 
-          // --- ISI UTAMA: DAFTAR ANTRIAN ---
+          // --- ISI UTAMA: DAFTAR ANTRIAN (Expanded) ---
+          // ✅ Expanded 1: Mengambil sisa ruang di layar (di bawah Header)
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // const Text( // Judul ini bisa dihapus karena di dalam ChatQueuePage sudah ada pemisahan
-                  //   'Antrian Konsultasi Baru',
-                  //   style: TextStyle(
-                  //     fontSize: 16,
-                  //     fontWeight: FontWeight.w600,
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 12),
-
-                  // Menggunakan ChatQueuePage
+                  // ✅ Expanded 2: Memaksa ChatQueuePage agar punya tinggi terbatas
+                  // dan bisa di-scroll di dalamnya.
                   const Expanded(
-                    child: ChatQueuePage(),
+                    child: ChatQueuePage(isEmbedded: true),
                   ),
                 ],
               ),

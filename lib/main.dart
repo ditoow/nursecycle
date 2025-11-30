@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:nursecycle/screens/home/nurse_homepage.dart';
+// import 'package:nursecycle/screens/auth/registerpage.dart
+import 'package:nursecycle/screens/nurse_mainpage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:nursecycle/core/theme.dart';
 import 'package:nursecycle/screens/auth/loginpage.dart';
 import 'package:nursecycle/screens/mainpage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-// void main() {
-//   runApp(const MyApp());
-// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +28,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NurseCycle',
-      theme: AppTheme.lightTheme, // Asumsi kamu punya theme di core/theme.dart
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      // ✅ PERBAIKAN UTAMA: Gunakan AuthGate sebagai pintu masuk
       home: const AuthGate(),
     );
   }
@@ -55,12 +54,13 @@ class AuthGate extends StatelessWidget {
 
         if (session != null) {
           // 2. User Login -> Cek Role di Database
-          return FutureBuilder<Map<String, dynamic>>(
+          // Menggunakan FutureBuilder untuk mengambil data profil sekali saja saat status login berubah
+          return FutureBuilder<Map<String, dynamic>?>(
             future: Supabase.instance.client
                 .from('profiles')
                 .select('role')
                 .eq('id', session.user.id)
-                .single(),
+                .maybeSingle(), // Aman: mengembalikan null jika tidak ada data, tidak error
             builder: (context, roleSnapshot) {
               // Loading saat fetch role
               if (roleSnapshot.connectionState == ConnectionState.waiting) {
@@ -68,18 +68,14 @@ class AuthGate extends StatelessWidget {
                     body: Center(child: CircularProgressIndicator()));
               }
 
-              // Jika ada error atau data kosong, fallback ke Pasien (atau Error Page)
-              if (roleSnapshot.hasError || !roleSnapshot.hasData) {
-                // Opsional: Bisa logout paksa jika role tidak ketemu
-                // Supabase.instance.client.auth.signOut();
-                return const Mainpage();
-              }
-
-              final role = roleSnapshot.data!['role'] as String?;
+              // Jika roleSnapshot.data null (profil belum dibuat), kita bisa fallback ke pasien
+              // atau menampilkan loading jika Anda yakin profil sedang dibuat oleh Loginpage.
+              // Di sini kita fallback ke 'patient' agar tidak stuck.
+              final role = roleSnapshot.data?['role'] as String? ?? 'patient';
 
               // 3. Routing Berdasarkan Role
               if (role == 'nurse') {
-                return const NurseHomePage();
+                return const NurseMainPage(); // ✅ GANTI JADI INI
               } else {
                 return const Mainpage(); // Pasien
               }
