@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nursecycle/core/colorconfig.dart'; // Pastikan primaryColor ada
+import 'package:nursecycle/screens/admin/access_stats_page.dart';
 import 'package:nursecycle/screens/home/nurse_homepage.dart';
 import 'package:nursecycle/screens/chat/chatqueuepage.dart';
 import 'package:nursecycle/screens/article/manage_articles_page.dart';
@@ -19,6 +20,7 @@ class _NurseMainPageState extends State<NurseMainPage> {
     NurseHomePage(), // Index 0: Dashboard
     ChatQueuePage(), // Index 1: Antrian Chat (Full Page)
     ManageArticlesPage(), // Index 2: Kelola Artikel
+    AccessStatsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -68,6 +70,11 @@ class _NurseMainPageState extends State<NurseMainPage> {
               icon: Icon(Icons.edit_document),
               activeIcon: Icon(Icons.description),
               label: 'Artikel',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_outlined),
+              activeIcon: Icon(Icons.analytics_rounded),
+              label: 'Statistik',
             ),
           ],
         ),

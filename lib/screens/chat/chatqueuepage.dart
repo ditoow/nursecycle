@@ -28,12 +28,14 @@ class _ChatQueuePageState extends State<ChatQueuePage> {
 
     try {
       await supabase.from('chat_rooms').update({
-        'assigned_to_id': currentNurseId,
+        'assigned_to_id': currentNurseId, // Assign ke perawat ini
+        'is_bot_active': false, // ✅ MATIKAN BOT (Handover ke Manusia)
       }).eq('id', roomId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chat berhasil diklaim!')),
+          const SnackBar(
+              content: Text('Chat berhasil diklaim! Bot dinonaktifkan.')),
         );
       }
     } catch (error) {
@@ -223,8 +225,8 @@ class _ChatQueuePageState extends State<ChatQueuePage> {
 
     // Parsing waktu
     final lastMessageTime = room['last_message_at'] != null
-        ? DateTime.parse(room['last_message_at'])
-        : DateTime.parse(room['created_at']);
+        ? DateTime.parse(room['last_message_at']).toLocal()
+        : DateTime.parse(room['created_at']).toLocal();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

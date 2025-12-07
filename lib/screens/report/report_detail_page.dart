@@ -164,19 +164,18 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
                   const SizedBox(height: 20),
 
                   // --- 1. ANTROPOMETRI ---
-                  _buildSectionTitle("📏 Antropometri"),
+                  _buildSectionTitle("Antropometri"),
                   _buildAntropometriCard(),
                   const SizedBox(height: 20),
 
                   // --- 2. PUBERTAS (TANNER) ---
-                  _buildSectionTitle("🔍 Tanda Seksual Sekunder"),
+                  _buildSectionTitle("Tanda Seksual Sekunder"),
                   _buildTannerCard(isMale),
                   const SizedBox(height: 20),
 
                   // --- 3. KESEHATAN REPRODUKSI ---
-                  _buildSectionTitle(isMale
-                      ? "🩺 Fisik & Reproduksi"
-                      : "🌸 Menstruasi & Fisik"),
+                  _buildSectionTitle(
+                      isMale ? "Fisik & Reproduksi" : "Menstruasi & Fisik"),
                   _buildReproCard(isMale),
 
                   const SizedBox(height: 30),

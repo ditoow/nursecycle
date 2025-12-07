@@ -36,6 +36,15 @@ class LoginpageState extends State<Loginpage> {
     super.dispose();
   }
 
+  Future<void> _logUserAccess() async {
+    try {
+      // INSERT KOSONG: Hanya mencatat waktu. user_id diabaikan.
+      await Supabase.instance.client.from('access_logs').insert({});
+    } catch (e) {
+      print('Gagal mencatat log akses: $e');
+    }
+  }
+
   Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
@@ -83,6 +92,7 @@ class LoginpageState extends State<Loginpage> {
           const SnackBar(content: Text("Login Berhasil!")),
         );
       }
+      await _logUserAccess();
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -169,34 +179,53 @@ class LoginpageState extends State<Loginpage> {
                           identifier(identifiercontroller),
                           SizedBox(height: paddingVertical),
 
-                          const Text("Password",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
-
-                          TextField(
-                            controller: passwordcontroller,
-                            obscureText: obscurePassword,
-                            style: const TextStyle(fontSize: 14),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 10),
-                              border: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: primaryColor)),
-                              focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: primaryColor, width: 2)),
-                              hintText: "Masukkan Password",
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                    obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    size: 20),
-                                onPressed: () => setState(
-                                    () => obscurePassword = !obscurePassword),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Password",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                child: TextField(
+                                  controller: passwordcontroller,
+                                  obscureText: obscurePassword,
+                                  style: const TextStyle(fontSize: 14),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 14),
+                                    border: UnderlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: primaryColor),
+                                    ),
+                                    focusedBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: primaryColor, width: 2),
+                                    ),
+                                    // Pastikan TTextField juga pakai focusColor ini
+                                    focusColor: primaryColor,
+                                    floatingLabelBehavior:
+                                        FloatingLabelBehavior.never,
+                                    hintText: "Masukkan Password",
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        size: 20, // Samakan ukuran icon
+                                      ),
+                                      onPressed: () => setState(() =>
+                                          obscurePassword = !obscurePassword),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           // ✅ Gunakan Spacer lagi untuk mendorong tombol ke bawah

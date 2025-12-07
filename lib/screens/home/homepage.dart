@@ -96,7 +96,7 @@ class _HomepageState extends State<Homepage> {
           if (healthRes != null) {
             _hasHealthData = true;
             _latestHealthData = healthRes;
-            final date = DateTime.parse(healthRes['created_at']);
+            final date = DateTime.parse(healthRes['created_at']).toLocal();
             _lastUpdateDate = DateFormat('d MMM yyyy').format(date);
           }
 
@@ -279,7 +279,7 @@ class _HomepageState extends State<Homepage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "🩺 Riwayat Kesehatan",
+                              "Riwayat Kesehatan",
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,

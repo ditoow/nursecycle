@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nursecycle/screens/lock_page.dart';
 // import 'package:nursecycle/screens/auth/registerpage.dart
 import 'package:nursecycle/screens/nurse_mainpage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -32,6 +33,42 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       // ✅ PERBAIKAN UTAMA: Gunakan AuthGate sebagai pintu masuk
       home: const AuthGate(),
+    );
+  }
+}
+
+class AppGuard extends StatelessWidget {
+  const AppGuard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      // Stream tabel app_config ID=1
+      stream: Supabase.instance.client
+          .from('app_config')
+          .stream(primaryKey: ['id']).eq('id', 1),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+
+        // Default true jika data belum ada/error
+        bool isAppActive = true;
+
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          isAppActive = snapshot.data!.first['is_active'] ?? true;
+        }
+
+        // --- LOGIKA KILL SWITCH ---
+        if (isAppActive == false) {
+          // ✅ Panggil LockPage desain Anda
+          return const LockPage();
+        }
+
+        // Jika aktif, lanjut ke AuthGate
+        return const AuthGate();
+      },
     );
   }
 }

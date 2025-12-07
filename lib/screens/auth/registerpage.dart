@@ -157,33 +157,14 @@ class RegisterpageState extends State<Registerpage> {
                           SizedBox(height: paddingVertical),
                           email(emailcontroller),
                           SizedBox(height: paddingVertical),
-                          const Text("Password",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
-                          TextField(
-                            controller: passwordcontroller,
-                            obscureText: obscurePassword,
-                            style: const TextStyle(fontSize: 14),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 10),
-                              border: UnderlineInputBorder(
-                                  borderSide: BorderSide(color: primaryColor)),
-                              focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: primaryColor, width: 2)),
-                              hintText: "Masukkan Password",
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                    obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    size: 20),
-                                onPressed: () => setState(
-                                    () => obscurePassword = !obscurePassword),
-                              ),
-                            ),
+                          password(
+                            passwordcontroller,
+                            obscurePassword,
+                            () {
+                              setState(() {
+                                obscurePassword = !obscurePassword;
+                              });
+                            },
                           ),
                           SizedBox(height: paddingVertical),
                           const Text("Register as",
@@ -299,6 +280,49 @@ Widget email(TextEditingController controller) {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       TTextField(
           controller: controller, label: "Email", hintText: "Masukkan email")
+    ],
+  );
+}
+
+Widget password(
+  TextEditingController controller,
+  bool obscure,
+  VoidCallback onToggle,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        "Password",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: controller,
+        style: const TextStyle(fontSize: 14),
+        obscureText: obscure,
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+          border: UnderlineInputBorder(
+            borderSide: BorderSide(color: primaryColor),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: primaryColor, width: 2),
+          ),
+          focusColor: primaryColor,
+          floatingLabelBehavior: FloatingLabelBehavior.never,
+          hintText: "Masukkan Password",
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscure ? Icons.visibility_off : Icons.visibility,
+              size: 20,
+            ),
+            onPressed: onToggle,
+          ),
+        ),
+      ),
     ],
   );
 }
